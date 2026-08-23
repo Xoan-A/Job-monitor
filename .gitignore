@@ -18,6 +18,10 @@ build/
 htmlcov/
 .tox/
 
+# Output files
+*.json
+!config.json
+
 # n8n runtime data
 n8n/data/
 

@@ -1,0 +1,36 @@
+scrapers:
+  buscojobs:
+    enabled: true
+    rate_limit: 1.0
+    params:
+      country: "uy"
+      api_base: "https://api.buscojobs.com/v3/uy"
+      site_base: "https://www.buscojobs.com.uy"
+      page_size: 15
+
+  jooble:
+    enabled: false
+    rate_limit: 2.0
+    params:
+      api_key: "${JOOBLE_API_KEY}"
+      api_base: "https://jooble.org/api"
+      country: "uy"
+      page_size: 20
+
+database:
+  host: "${POSTGRES_HOST}"
+  port: 5432
+  user: "${POSTGRES_USER}"
+  password: "${POSTGRES_PASSWORD}"
+  name: "${POSTGRES_DB}"
+  pool_size: 5
+  max_overflow: 10
+
+scheduler:
+  enabled: false
+  interval_hours: 24
+  default_terms:
+    - "informatica"
+    - "desarrollo"
+    - "software"
+  default_pages: 5
