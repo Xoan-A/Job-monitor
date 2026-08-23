@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Optional
+from typing import List, Optional
 
 
 @dataclass
@@ -22,6 +22,10 @@ class Job:
     is_featured: bool = False
     company_id: Optional[int] = None
     source: str = "buscojobs"
+    salary: Optional[str] = None
+    job_type: Optional[str] = None
+    tags: List[str] = field(default_factory=list)
+    experience_level: Optional[str] = None
 
     def to_dict(self) -> dict:
         return asdict(self)

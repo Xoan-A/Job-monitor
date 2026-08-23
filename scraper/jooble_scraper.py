@@ -86,6 +86,14 @@ class JoobleScraper(BaseScraper):
         company = raw.get("company", {})
         salary = raw.get("salary")
 
+        tags = []
+        if isinstance(raw.get("tags"), list):
+            for tag in raw["tags"]:
+                if isinstance(tag, dict) and tag.get("name"):
+                    tags.append(tag["name"])
+                elif isinstance(tag, str):
+                    tags.append(tag)
+
         return Job(
             id=job_id,
             title=raw.get("title") or raw.get("jobTitle") or "",
@@ -93,10 +101,18 @@ class JoobleScraper(BaseScraper):
             company=company.get("name") if isinstance(company, dict) else raw.get("company"),
             description=raw.get("snippet") or raw.get("description"),
             city=location.get("name") if isinstance(location, dict) else raw.get("location"),
+            department=None,
             country=self.country.upper(),
             published_at=raw.get("updated_at") or raw.get("date") or raw.get("date_caption"),
             modality="Remote" if raw.get("is_remote") else "Presencial",
             channel="Jooble",
-            source="jooble",
+            subchannel=None,
+            is_confidential=False,
+            is_featured=False,
             company_id=None,
+            source="jooble",
+            salary=salary.get("value") if isinstance(salary, dict) else salary,
+            job_type=raw.get("job_type"),
+            tags=tags,
+            experience_level=raw.get("experience"),
         )

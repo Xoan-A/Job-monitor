@@ -50,11 +50,22 @@ class JobRecord(Base):
     is_confidential = Column(Integer, default=0)
     is_featured = Column(Integer, default=0)
     company_id = Column(Integer)
+    salary = Column(String(200))
+    job_type = Column(String(100))
+    tags = Column(JSON)
+    experience_level = Column(String(100))
     raw_data = Column(JSON)
     created_at = Column(DateTime, default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
 
     def to_job(self) -> Job:
+        import json
+        tags = self.tags
+        if isinstance(tags, str):
+            try:
+                tags = json.loads(tags)
+            except Exception:
+                tags = []
         return Job(
             id=self.id,
             title=self.title,
@@ -72,6 +83,10 @@ class JobRecord(Base):
             is_featured=bool(self.is_featured),
             company_id=self.company_id,
             source=self.source,
+            salary=self.salary,
+            job_type=self.job_type,
+            tags=tags or [],
+            experience_level=self.experience_level,
         )
 
     @classmethod
@@ -93,6 +108,10 @@ class JobRecord(Base):
             is_confidential=int(job.is_confidential),
             is_featured=int(job.is_featured),
             company_id=job.company_id,
+            salary=job.salary,
+            job_type=job.job_type,
+            tags=job.tags,
+            experience_level=job.experience_level,
             raw_data=job.to_dict(),
         )
 
@@ -170,6 +189,10 @@ class Database:
                     is_confidential=record.is_confidential,
                     is_featured=record.is_featured,
                     company_id=record.company_id,
+                    salary=record.salary,
+                    job_type=record.job_type,
+                    tags=record.tags,
+                    experience_level=record.experience_level,
                     raw_data=record.raw_data,
                 )
                 stmt = stmt.on_conflict_do_update(
@@ -189,6 +212,10 @@ class Database:
                         is_confidential=stmt.excluded.is_confidential,
                         is_featured=stmt.excluded.is_featured,
                         company_id=stmt.excluded.company_id,
+                        salary=stmt.excluded.salary,
+                        job_type=stmt.excluded.job_type,
+                        tags=stmt.excluded.tags,
+                        experience_level=stmt.excluded.experience_level,
                         raw_data=stmt.excluded.raw_data,
                         updated_at=func.now(),
                     ),
