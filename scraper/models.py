@@ -37,6 +37,8 @@ class ScrapeResult:
     total: int = 0
     pages: int = 0
     source: str = "api"
+    new_jobs: int = 0
+    updated_jobs: int = 0
 
     def to_dict(self) -> dict:
         return {
@@ -44,4 +46,6 @@ class ScrapeResult:
             "total": self.total,
             "pages": self.pages,
             "jobs": [job.to_dict() for job in self.jobs],
+            "new_jobs": self.new_jobs,
+            "updated_jobs": self.updated_jobs,
         }

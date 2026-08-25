@@ -19,6 +19,7 @@ class JoobleScraper(BaseScraper):
         self.api_key = config.params.get("api_key")
         self.api_base = config.params.get("api_base", "https://jooble.org/api")
         self.country = config.params.get("country", "uy")
+        self.location = config.params.get("location", self.country)
         self.page_size = config.params.get("page_size", 20)
         self._last_request = 0.0
 
@@ -48,7 +49,7 @@ class JoobleScraper(BaseScraper):
     def fetch_page(self, page: int, page_size: int, term: Optional[str] = None) -> List[dict]:
         payload = {
             "keywords": term or "",
-            "location": self.country,
+            "location": self.location,
             "page": page,
             "ResultOnPage": page_size,
         }
@@ -59,7 +60,7 @@ class JoobleScraper(BaseScraper):
         return jobs
 
     def fetch_count(self, term: Optional[str] = None) -> int:
-        payload = {"keywords": term or "", "location": self.country, "page": 1, "ResultOnPage": 1}
+        payload = {"keywords": term or "", "location": self.location, "page": 1, "ResultOnPage": 1}
         data = self._post(payload)
         return int(data.get("totalCount", 0))
 

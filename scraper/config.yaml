@@ -9,12 +9,13 @@ scrapers:
       page_size: 15
 
   jooble:
-    enabled: false
+    enabled: true
     rate_limit: 2.0
     params:
       api_key: "${JOOBLE_API_KEY}"
-      api_base: "https://jooble.org/api"
+      api_base: "https://uy.jooble.org/api"
       country: "uy"
+      location: "Montevideo, Uruguay"
       page_size: 20
 
 database:
@@ -34,3 +35,21 @@ scheduler:
     - "desarrollo"
     - "software"
   default_pages: 5
+
+# Optional candidate profile. Skills listed here power the transparent,
+# keyword-based match score ("Why this matches" in the web UI).
+# Remove or leave empty to disable match scoring entirely.
+profile:
+  skills:
+    - "C#"
+    - ".NET"
+    - "ASP.NET"
+    - "SQL Server"
+    - "PostgreSQL"
+    - "Docker"
+    - "Git"
+    - "REST"
+    - "Python"
+    - "JavaScript"
+    - "TypeScript"
+    - "React"

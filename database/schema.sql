@@ -15,6 +15,11 @@ CREATE TABLE IF NOT EXISTS jobs (
     salary_max       NUMERIC(14, 2),
     salary_currency  CHAR(3),
     content_hash     CHAR(64),
+    -- User workflow state (used by the web frontend)
+    user_status      VARCHAR(20)  NOT NULL DEFAULT 'new',
+    is_saved         BOOLEAN      NOT NULL DEFAULT FALSE,
+    notes            TEXT,
+    reviewed_at      TIMESTAMPTZ,
     created_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     UNIQUE (source, external_id)

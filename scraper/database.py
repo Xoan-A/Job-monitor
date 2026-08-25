@@ -7,6 +7,7 @@ from typing import Any, Dict, Generator, List, Optional
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     Column,
     DateTime,
     Integer,
@@ -16,6 +17,7 @@ from sqlalchemy import (
     create_engine,
     func,
     select,
+    text,
 )
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
@@ -55,6 +57,11 @@ class JobRecord(Base):
     tags = Column(JSON)
     experience_level = Column(String(100))
     raw_data = Column(JSON)
+    # User workflow state (added by the frontend/API layer)
+    user_status = Column(String(20), nullable=False, server_default="new", index=True)
+    is_saved = Column(Boolean, nullable=False, server_default=text("false"))
+    notes = Column(Text)
+    reviewed_at = Column(DateTime)
     created_at = Column(DateTime, default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
 
@@ -153,6 +160,20 @@ class Database:
 
     def init_db(self):
         Base.metadata.create_all(self.engine)
+        self.ensure_user_columns()
+
+    def ensure_user_columns(self):
+        """Lightweight migration: add user workflow columns if the table predates them."""
+        statements = [
+            "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS user_status VARCHAR(20) NOT NULL DEFAULT 'new'",
+            "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS is_saved BOOLEAN NOT NULL DEFAULT FALSE",
+            "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS notes TEXT",
+            "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP",
+            "CREATE INDEX IF NOT EXISTS ix_jobs_user_status ON jobs (user_status)",
+        ]
+        with self.engine.begin() as conn:
+            for stmt in statements:
+                conn.execute(text(stmt))
 
     @contextmanager
     def session(self) -> Generator[Session, None, None]:
@@ -171,60 +192,25 @@ class Database:
         updated_count = 0
         with self.session() as session:
             for job in jobs:
+                # Check if job exists
+                existing = session.query(JobRecord).filter(
+                    JobRecord.source == job.source,
+                    JobRecord.external_id == str(job.id)
+                ).first()
+                
                 record = JobRecord.from_job(job)
-                stmt = insert(JobRecord).values(
-                    source=record.source,
-                    external_id=record.external_id,
-                    title=record.title,
-                    url=record.url,
-                    company=record.company,
-                    description=record.description,
-                    city=record.city,
-                    department=record.department,
-                    country=record.country,
-                    published_at=record.published_at,
-                    modality=record.modality,
-                    channel=record.channel,
-                    subchannel=record.subchannel,
-                    is_confidential=record.is_confidential,
-                    is_featured=record.is_featured,
-                    company_id=record.company_id,
-                    salary=record.salary,
-                    job_type=record.job_type,
-                    tags=record.tags,
-                    experience_level=record.experience_level,
-                    raw_data=record.raw_data,
-                )
-                stmt = stmt.on_conflict_do_update(
-                    index_elements=["source", "external_id"],
-                    set_=dict(
-                        title=stmt.excluded.title,
-                        url=stmt.excluded.url,
-                        company=stmt.excluded.company,
-                        description=stmt.excluded.description,
-                        city=stmt.excluded.city,
-                        department=stmt.excluded.department,
-                        country=stmt.excluded.country,
-                        published_at=stmt.excluded.published_at,
-                        modality=stmt.excluded.modality,
-                        channel=stmt.excluded.channel,
-                        subchannel=stmt.excluded.subchannel,
-                        is_confidential=stmt.excluded.is_confidential,
-                        is_featured=stmt.excluded.is_featured,
-                        company_id=stmt.excluded.company_id,
-                        salary=stmt.excluded.salary,
-                        job_type=stmt.excluded.job_type,
-                        tags=stmt.excluded.tags,
-                        experience_level=stmt.excluded.experience_level,
-                        raw_data=stmt.excluded.raw_data,
-                        updated_at=func.now(),
-                    ),
-                )
-                result = session.execute(stmt)
-                if result.rowcount == 1:
-                    new_count += 1
-                else:
+                
+                if existing:
+                    # Update existing
+                    for key, value in record.__dict__.items():
+                        if not key.startswith('_') and key not in ('id', 'created_at'):
+                            setattr(existing, key, value)
+                    existing.updated_at = func.now()
                     updated_count += 1
+                else:
+                    # Insert new
+                    session.add(record)
+                    new_count += 1
         return {"new": new_count, "updated": updated_count}
 
     def get_jobs(

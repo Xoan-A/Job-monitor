@@ -38,5 +38,11 @@ Thumbs.db
 # Docker
 postgres_data/
 
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.vite/
+
 # Jupyter
 .ipynb_checkpoints/

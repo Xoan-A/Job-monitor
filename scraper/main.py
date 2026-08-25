@@ -38,11 +38,22 @@ def scrape(
     scraper = ScraperRegistry.create(scraper_name, scraper_config)
     result = scraper.scrape(term=term, pages=pages, page_size=page_size)
 
+    new_jobs = 0
+    updated_jobs = 0
     if db and result.jobs:
         stats = db.upsert_jobs(result.jobs)
         logger.info("DB upsert: %d new, %d updated", stats["new"], stats["updated"])
+        new_jobs = stats["new"]
+        updated_jobs = stats["updated"]
 
-    return result
+    return ScrapeResult(
+        jobs=result.jobs,
+        total=result.total,
+        pages=pages,
+        source=result.source,
+        new_jobs=new_jobs,
+        updated_jobs=updated_jobs,
+    )
 
 
 def list_scrapers() -> List[str]:
