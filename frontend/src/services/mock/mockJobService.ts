@@ -52,6 +52,11 @@ function matchesFilters(job: Job, q: JobQuery): boolean {
     const published = job.publishedAt ? new Date(job.publishedAt).getTime() : 0
     if (!published || Date.now() - published > days * 86400000) return false
   }
+  if (q.discoveredWithin) {
+    const days = parseInt(q.discoveredWithin, 10)
+    const created = job.createdAt ? new Date(job.createdAt).getTime() : 0
+    if (!created || Date.now() - created > days * 86400000) return false
+  }
   return true
 }
 

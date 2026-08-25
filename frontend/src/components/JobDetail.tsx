@@ -1,6 +1,7 @@
+import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import type { Job } from '../types'
-import { looksLikeHtml, remoteLabelFromModality, sanitizeHtml, sourceLabel, timeAgo, formatDate } from '../lib/format'
+import { decodeEntities, looksLikeHtml, remoteLabelFromModality, sanitizeHtml, sourceLabel, timeAgo, formatDate } from '../lib/format'
 import { DetailSection, MetadataItem, SkillList } from './SkillList'
 import { JobActions } from './JobActions'
 import { MatchAnalysis } from './MatchAnalysis'
@@ -109,32 +110,101 @@ function JobDetailContent({ job }: { job: Job }) {
   )
 }
 
+const COLLAPSE_THRESHOLD = 900 // chars; longer descriptions start collapsed
+const SNIPPET_THRESHOLD = 600 // chars; shorter descriptions are likely snippets
+
 function DescriptionSection({ job }: { job: Job }) {
+  const [expanded, setExpanded] = useState(false)
+  const [measured, setMeasured] = useState(false)
+  const contentRef = useRef<HTMLDivElement | null>(null)
+  const [tooTall, setTooTall] = useState(false)
+
+  useEffect(() => {
+    setExpanded(false)
+    setMeasured(false)
+  }, [job.id])
+
+  useEffect(() => {
+    if (measured) return
+    const el = contentRef.current
+    if (!el) return
+    setTooTall(el.scrollHeight > 380 || (job.description?.length ?? 0) > COLLAPSE_THRESHOLD)
+    setMeasured(true)
+  }, [measured, job.description, job.id])
+
+  const descLen = job.description?.length ?? 0
+  const isSnippet = descLen > 0 && descLen < SNIPPET_THRESHOLD
+
   if (!job.description) {
     return (
       <DetailSection title="About the role">
+        <SourceLinkBanner job={job} />
         <p className="description description--empty">No description was provided by the source.</p>
       </DetailSection>
     )
   }
+
+  const isHtml = looksLikeHtml(job.description)
+  const collapsed = !expanded && tooTall && measured
+
   return (
     <DetailSection title="About the role">
-      {looksLikeHtml(job.description) ? (
-        <div
-          className="description description--html"
-          dangerouslySetInnerHTML={{ __html: sanitizeHtml(job.description as string) }}
-        />
-      ) : (
-        <PlainTextDescription text={job.description} />
+      {isSnippet && <SourceLinkBanner job={job} />}
+      <div className={`description-wrap ${collapsed ? 'description-wrap--collapsed' : ''}`}>
+        {isHtml ? (
+          <div
+            ref={contentRef}
+            className="description description--html"
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(job.description as string) }}
+          />
+        ) : (
+          <div ref={contentRef} className="description">
+            <PlainTextDescription text={job.description} />
+          </div>
+        )}
+        {collapsed && <div className="description-wrap__fade" aria-hidden />}
+      </div>
+      {tooTall && measured && (
+        <button type="button" className="btn btn--ghost btn--sm description-toggle" onClick={() => setExpanded((v) => !v)}>
+          {expanded ? 'Show less' : 'Show full description'}
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden
+            style={{ transform: expanded ? 'rotate(180deg)' : undefined, transition: 'transform 0.15s ease' }}
+          >
+            <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
       )}
     </DetailSection>
   )
 }
 
+function SourceLinkBanner({ job }: { job: Job }) {
+  const sourceUrl = job.applicationUrl || job.url
+  if (!sourceUrl) return null
+  return (
+    <div className="source-link-banner">
+      <IconExternalLink size={14} className="source-link-banner__icon" />
+      <span className="source-link-banner__text">
+        This is a preview from {sourceLabel(job.source)}. The full listing with requirements and benefits is available on the original site.
+      </span>
+      <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="btn btn--primary btn--xs source-link-banner__cta">
+        Open full listing <IconExternalLink size={10} aria-hidden />
+      </a>
+    </div>
+  )
+}
+
 function PlainTextDescription({ text }: { text: string }) {
   const blocks: { type: 'p' | 'li'; content: string; items?: string[] }[] = []
-  for (const line of text.split(/\r?\n/)) {
-    const trimmed = line.trim()
+  for (const line of text.replace(/^\s+/, '').split(/\r?\n/)) {
+    const trimmed = decodeEntities(line).trim()
     if (!trimmed) continue
     const bullet = /^([-*•·])\s+/.exec(trimmed)
     const isBullet = Boolean(bullet)

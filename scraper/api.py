@@ -51,13 +51,8 @@ def get_profile() -> Dict[str, Any]:
     return _profile_cache
 
 
-# ---------------------------------------------------------------------------
-# Response models
-# ---------------------------------------------------------------------------
-
-
 class ScrapeRequest(BaseModel):
-    source: str = Field(default="buscojobs", description="Scraper source (buscojobs, jooble)")
+    source: str = Field(default="buscojobs", description="Scraper source (buscojobs, jooble, getonbrd)")
     term: Optional[str] = Field(default=None, description="Search term")
     pages: int = Field(default=3, ge=1, le=50, description="Number of pages")
     page_size: int = Field(default=15, ge=1, le=100, description="Results per page")
@@ -161,11 +156,6 @@ class BulkPatchRequest(BaseModel):
     user_status: Optional[str] = None
     is_saved: Optional[bool] = None
     mark_reviewed: Optional[bool] = None
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 
 def _iso(dt) -> Optional[str]:
@@ -288,6 +278,11 @@ def _build_filters(args: Dict[str, Any]) -> List:
             func.coalesce(JobRecord.published_at, JobRecord.created_at)
             >= func.now() - func.make_interval(0, 0, 0, posted_within)
         )
+    discovered_within = args.get("discovered_within")
+    if discovered_within:
+        filters.append(
+            JobRecord.created_at >= func.now() - func.make_interval(0, 0, 0, discovered_within)
+        )
     skill = args.get("skill")
     if skill:
         filters.append(cast(JobRecord.tags, String).ilike(f"%{skill}%"))
@@ -313,11 +308,6 @@ def _order_clause(sort: str, q: Optional[str]):
         exact = JobRecord.title.ilike(f"%{q}%").desc()
         return [exact, newest.desc()]
     return [newest.desc()]
-
-
-# ---------------------------------------------------------------------------
-# App setup
-# ---------------------------------------------------------------------------
 
 
 @asynccontextmanager
@@ -357,11 +347,6 @@ async def health():
         return {"status": "ok", "database": "ok"}
     except Exception as exc:
         return {"status": "ok", "database": f"unavailable: {exc}"}
-
-
-# ---------------------------------------------------------------------------
-# Scraping
-# ---------------------------------------------------------------------------
 
 
 def _run_cmd(cmd: List[str]) -> subprocess.CompletedProcess:
@@ -453,11 +438,6 @@ async def list_sources():
     return {"sources": sources}
 
 
-# ---------------------------------------------------------------------------
-# Jobs: list / detail / mutations
-# ---------------------------------------------------------------------------
-
-
 @app.get("/jobs", response_model=JobsListResponse)
 async def list_jobs(
     page: int = Query(1, ge=1),
@@ -474,7 +454,8 @@ async def list_jobs(
     skill: Optional[str] = Query(None),
     user_status: Optional[str] = Query(None, description="Filter by workflow status"),
     saved: Optional[bool] = Query(None),
-    posted_within: Optional[int] = Query(None, ge=0, le=365, description="Days back"),
+    posted_within: Optional[int] = Query(None, ge=0, le=365, description="Days back (publication date)"),
+    discovered_within: Optional[int] = Query(None, ge=0, le=365, description="Days back (first discovered)"),
     has_salary: Optional[bool] = Query(None),
     sort: str = Query("newest", description="newest | oldest | company | relevance | salary"),
 ):
@@ -493,6 +474,7 @@ async def list_jobs(
         user_status=user_status if user_status in VALID_STATUSES else None,
         saved=saved,
         posted_within=posted_within or None,
+        discovered_within=discovered_within or None,
         has_salary=has_salary,
     )
     with db.session() as session:
@@ -617,19 +599,18 @@ async def bulk_update(req: BulkPatchRequest):
     return {"updated": updated, "missing": missing}
 
 
-# ---------------------------------------------------------------------------
-# Stats summary
-# ---------------------------------------------------------------------------
-
-
 @app.get("/stats/summary", response_model=SummaryResponse)
 async def stats_summary():
     db = get_db()
     with db.session() as session:
         total = session.scalar(select(func.count(JobRecord.id))) or 0
         saved = session.scalar(select(func.count(JobRecord.id)).where(JobRecord.is_saved.is_(True))) or 0
+        # "New" for the UI: untouched jobs discovered in the last 48 hours
         unread = session.scalar(
-            select(func.count(JobRecord.id)).where(JobRecord.user_status == "new")
+            select(func.count(JobRecord.id)).where(
+                JobRecord.user_status == "new",
+                JobRecord.created_at >= func.now() - func.make_interval(0, 0, 0, 2),
+            )
         ) or 0
         by_status = [
             StatusCount(status=status or "new", count=count)

@@ -18,6 +18,15 @@ scrapers:
       location: "Montevideo, Uruguay"
       page_size: 20
 
+  getonbrd:
+    enabled: true
+    rate_limit: 1.0
+    params:
+      api_base: "https://www.getonbrd.com/api/v0"
+      country_code: "UY"
+      lang: "en"
+      page_size: 120
+
 database:
   host: "${POSTGRES_HOST}"
   port: 5432

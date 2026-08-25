@@ -100,7 +100,8 @@ const AppContext = createContext<AppState | null>(null)
 function sectionToFilters(section: NavSection): Partial<JobFilters> {
   switch (section) {
     case 'new':
-      return { status: 'new', saved: null }
+      // "New" = discovered in the last 48 hours and still untouched
+      return { status: 'new', discoveredWithin: '2', saved: null }
     case 'saved':
       return { saved: true, status: '' }
     case 'shortlisted':
@@ -157,7 +158,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const toastIdRef = useRef(0)
   const searchInputRef = useRef<HTMLInputElement | null>(null)
 
-  // ---- service resolution -------------------------------------------------
   useEffect(() => {
     let cancelled = false
     setSourceKind('loading')
@@ -191,7 +191,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 5000)
   }, [])
 
-  // ---- stats ---------------------------------------------------------------
   const refreshStats = useCallback(() => {
     if (!service) return
     service
@@ -215,7 +214,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (service) refreshStats()
   }, [service, refreshStats])
 
-  // ---- job list ------------------------------------------------------------
   const fetchJobs = useCallback(
     async (page: number, append: boolean) => {
       if (!service) return
@@ -263,7 +261,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     refreshStats()
   }, [fetchJobs, refreshStats])
 
-  // ---- filters / navigation --------------------------------------------------
   const patchFilter = useCallback(<K extends keyof JobFilters>(key: K, value: JobFilters[K]) => {
     setFilters((f) => ({ ...f, [key]: value }))
   }, [])
@@ -298,7 +295,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [],
   )
 
-  // ---- detail --------------------------------------------------------------
   const selectJob = useCallback(
     (id: number | null) => {
       setSelectedJobId(id)
@@ -323,7 +319,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setMobileView('list')
   }, [])
 
-  // ---- mutations -----------------------------------------------------------
   const applyLocalPatch = useCallback((id: number, patch: Partial<Job>) => {
     setJobs((prev) => prev.map((j) => (j.id === id ? { ...j, ...patch } : j)))
     setDetail((d) => (d.job && d.job.id === id ? { ...d, job: { ...d.job, ...patch } } : d))

@@ -38,19 +38,28 @@ export function OverviewPage() {
         <section className="overview__panel">
           <h3 className="overview__panel-title">Pipeline</h3>
           <ul className="overview__stat-list">
-            {JOB_STATUSES.map((s: JobStatus) => (
-              <li key={s}>
-                <button
-                  type="button"
-                  className={`overview__stat ${['new', 'shortlisted', 'applied', 'rejected'].includes(s) ? 'overview__stat--linked' : ''}`}
-                  onClick={() => ['new', 'shortlisted', 'applied', 'rejected'].includes(s) && goToSection(s === 'new' ? 'new' : s === 'shortlisted' ? 'shortlisted' : s === 'applied' ? 'applied' : 'rejected')}
-                  disabled={!summary.byStatus[s]}
-                >
-                  <span className="overview__stat-label">{STATUS_LABELS[s]}</span>
-                  <span className="overview__stat-value">{summary.byStatus[s] || 0}</span>
-                </button>
-              </li>
-            ))}
+            {JOB_STATUSES.map((s: JobStatus) => {
+              const value = s === 'new' ? summary.unread : summary.byStatus[s] || 0
+              const linked = ['new', 'shortlisted', 'applied', 'rejected'].includes(s)
+              return (
+                <li key={s}>
+                  <button
+                    type="button"
+                    className={`overview__stat ${linked ? 'overview__stat--linked' : ''}`}
+                    onClick={() =>
+                      linked &&
+                      goToSection(s === 'new' ? 'new' : s === 'shortlisted' ? 'shortlisted' : s === 'applied' ? 'applied' : 'rejected')
+                    }
+                    disabled={!value}
+                  >
+                    <span className="overview__stat-label">
+                      {s === 'new' ? 'New (last 48 h)' : STATUS_LABELS[s]}
+                    </span>
+                    <span className="overview__stat-value">{value}</span>
+                  </button>
+                </li>
+              )
+            })}
             <li>
               <div className="overview__stat">
                 <span className="overview__stat-label">Saved</span>

@@ -48,7 +48,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       const body = await res.json()
       detail = body?.detail ? String(body.detail) : ''
     } catch {
-      /* ignore */
     }
     throw new ServiceError(`Request failed (${res.status})${detail ? `: ${detail}` : ''}`)
   }
@@ -103,6 +102,7 @@ export function buildApiParams(q: JobQuery): URLSearchParams {
   if (q.status) p.set('user_status', q.status)
   if (q.saved !== null && q.saved !== undefined) p.set('saved', String(q.saved))
   if (q.postedWithin) p.set('posted_within', q.postedWithin)
+  if (q.discoveredWithin) p.set('discovered_within', q.discoveredWithin)
   if (q.hasSalary) p.set('has_salary', 'true')
   p.set('sort', q.sort)
   p.set('page', String(q.page))

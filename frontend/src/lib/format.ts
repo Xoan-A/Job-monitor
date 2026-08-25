@@ -55,6 +55,20 @@ export function looksLikeHtml(text: string): boolean {
   return /<\/?(p|div|br|ul|ol|li|h[1-6]|strong|em|b|i|a|table|span)\b/i.test(text)
 }
 
+/** Decode the handful of HTML entities that survive into plain-text descriptions. */
+export function decodeEntities(text: string): string {
+  return text
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0?39;|&apos;|&rsquo;/gi, "'")
+    .replace(/&hellip;/gi, '...')
+    .replace(/&mdash;/gi, '—')
+    .replace(/&ndash;/gi, '–')
+}
+
 /** Render plain-text descriptions: blank-line paragraphs, "- "/"• " bullets preserved. */
 export function renderDescriptionBlocks(text: string): { type: 'p' | 'li'; text: string }[] {
   const blocks: { type: 'p' | 'li'; text: string }[] = []
@@ -80,6 +94,8 @@ export function sourceLabel(source: string): string {
       return 'Buscojobs'
     case 'jooble':
       return 'Jooble'
+    case 'getonbrd':
+      return 'Get on Board'
     default:
       return source.charAt(0).toUpperCase() + source.slice(1)
   }

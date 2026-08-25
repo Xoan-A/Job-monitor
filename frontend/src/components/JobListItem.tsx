@@ -99,16 +99,11 @@ export function JobListItem({ job, selected, checked, onSelect, onToggleCheck }:
           title={job.saved ? 'Saved' : 'Save'}
         >
           <IconBookmark size={14} filled={job.saved} />
-          {!compactSide() && <span>{job.saved ? 'Saved' : 'Save'}</span>}
+          <span>{job.saved ? 'Saved' : 'Save'}</span>
         </button>
       </div>
     </li>
   )
-}
-
-function compactSide(): boolean {
-  // keep the label on wide screens only; CSS hides text under 1200px anyway
-  return false
 }
 
 function firstSentence(job: Job): string {

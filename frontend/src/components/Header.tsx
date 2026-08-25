@@ -88,7 +88,7 @@ export function Header() {
               title="New in the last 24 hours"
             >
               <IconBell size={16} />
-              {summary && summary.byStatus['new'] > 0 && <span className="icon-btn__badge" />}
+              {summary && summary.unread > 0 && <span className="icon-btn__badge" />}
             </button>
           )}
           menuClassName="dropdown__menu--notifications"
@@ -96,10 +96,10 @@ export function Header() {
           {(close) => (
             <div>
               <div className="dropdown__section-title">Recently discovered</div>
-              {summary && summary.byStatus['new'] > 0 ? (
+              {summary && summary.unread > 0 ? (
                 <>
                   <p className="notifications__text">
-                    {summary.byStatus['new']} jobs are waiting for review
+                    {summary.unread} job{summary.unread === 1 ? '' : 's'} from the last 48 hours waiting for review
                     {summary.bySource.map((s) => ` · ${sourceLabel(s.name)} (${s.count})`).join('')}
                   </p>
                   <button

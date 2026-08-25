@@ -41,17 +41,26 @@ If the API is unreachable the frontend automatically falls back to built-in demo
 # one-off scrape from the CLI service
 docker compose run --rm scraper-cli scrape buscojobs --pages 3
 docker compose run --rm scraper-cli scrape jooble --pages 2 --term "desarrollo"
+docker compose run --rm scraper-cli scrape getonbrd --pages 1 --term ".NET"
 
 # or trigger it from the API
 curl -X POST http://localhost:8000/scrape -H "Content-Type: application/json" \
      -d '{"source": "buscojobs", "pages": 3}'
 ```
 
+### Data sources
+
+| Source | API | Full descriptions | Coverage |
+|--------|-----|-------------------|----------|
+| **Buscojobs** | REST API | ✅ | Uruguay |
+| **Jooble** | REST API | ⚠️ Snippets only | Uruguay (aggregator) |
+| **Get on Board** | Public API | ✅ Structured (description, functions, benefits, requirements) | LATAM (Chile, Argentina, Brazil, Mexico, Colombia, Peru, Uruguay) |
+
 ## API overview
 
 | Endpoint              | Description                                          |
 |-----------------------|------------------------------------------------------|
-| `GET /jobs`           | Paginated list with filters (`q`, `source_only`, `remote`, `city`, `job_type`, `experience`, `user_status`, `saved`, `posted_within`, `has_salary`, `skill`) and sorting (`newest`, `oldest`, `company`, `relevance`, `salary`) |
+| `GET /jobs`           | Paginated list with filters (`q`, `source_only`, `remote`, `city`, `job_type`, `experience`, `user_status`, `saved`, `posted_within`, `discovered_within`, `has_salary`, `skill`) and sorting (`newest`, `oldest`, `company`, `relevance`, `salary`) |
 | `GET /jobs/{id}`      | Job detail                                           |
 | `PATCH /jobs/{id}`    | Update `user_status` / `is_saved` / `notes` / mark reviewed |
 | `POST /jobs/bulk`     | Bulk status/save/review updates                      |
@@ -78,6 +87,10 @@ job-monitor/
 │   ├── nginx.conf       # serves app + proxies /api -> scraper-api
 │   └── src/
 ├── scraper/             # Python scrapers + FastAPI (api.py)
+│   ├── buscojobs_scraper.py
+│   ├── jooble_scraper.py
+│   ├── getonbrd_scraper.py
+│   └── api.py
 ├── database/schema.sql  # reference schema
 ├── n8n/workflows/
 └── docs/
@@ -94,8 +107,9 @@ npm run build      # typecheck + production build
 
 ## Roadmap
 
-- [x] Job scrapers (Buscojobs, Jooble)
+- [x] Job scrapers (Buscojobs, Jooble, Get on Board)
 - [x] REST API with user workflow state
 - [x] Web review workspace
+- [x] Idempotent upserts (no unnecessary updates)
 - [ ] n8n scheduled workflows
 - [ ] Tests

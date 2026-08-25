@@ -10,7 +10,7 @@ function ago(hoursAgo: number): string {
 
 interface MockSeed {
   id: number
-  source: 'buscojobs' | 'jooble'
+  source: 'buscojobs' | 'jooble' | 'getonbrd'
   title: string
   company: string | null
   confidential?: boolean

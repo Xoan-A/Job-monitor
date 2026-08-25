@@ -192,7 +192,6 @@ class Database:
         updated_count = 0
         with self.session() as session:
             for job in jobs:
-                # Check if job exists
                 existing = session.query(JobRecord).filter(
                     JobRecord.source == job.source,
                     JobRecord.external_id == str(job.id)
@@ -201,14 +200,18 @@ class Database:
                 record = JobRecord.from_job(job)
                 
                 if existing:
-                    # Update existing
+                    changed = False
                     for key, value in record.__dict__.items():
-                        if not key.startswith('_') and key not in ('id', 'created_at'):
+                        if key.startswith('_') or key in ('id', 'created_at', 'updated_at'):
+                            continue
+                        old_val = getattr(existing, key, None)
+                        if old_val != value:
                             setattr(existing, key, value)
-                    existing.updated_at = func.now()
-                    updated_count += 1
+                            changed = True
+                    if changed:
+                        existing.updated_at = func.now()
+                        updated_count += 1
                 else:
-                    # Insert new
                     session.add(record)
                     new_count += 1
         return {"new": new_count, "updated": updated_count}

@@ -55,7 +55,7 @@ export interface Job {
 }
 
 export type SortOption = 'newest' | 'oldest' | 'company' | 'relevance' | 'salary'
-export type PostedWithinOption = '' | '1' | '3' | '7' | '14' | '30' | '90'
+export type PostedWithinOption = '' | '1' | '2' | '3' | '7' | '14' | '30' | '90'
 
 export interface JobFilters {
   q: string
@@ -65,6 +65,7 @@ export interface JobFilters {
   employmentType: string
   experience: string
   postedWithin: PostedWithinOption
+  discoveredWithin: PostedWithinOption
   hasSalary: boolean
   company: string
   skill: string
@@ -80,6 +81,7 @@ export const EMPTY_FILTERS: JobFilters = {
   employmentType: '',
   experience: '',
   postedWithin: '',
+  discoveredWithin: '',
   hasSalary: false,
   company: '',
   skill: '',
@@ -96,6 +98,7 @@ export function filtersAreEmpty(f: JobFilters): boolean {
     !f.employmentType &&
     !f.experience &&
     !f.postedWithin &&
+    !f.discoveredWithin &&
     !f.hasSalary &&
     !f.company &&
     !f.skill &&
@@ -113,6 +116,7 @@ export function countActiveFilters(f: JobFilters): number {
   if (f.employmentType) n++
   if (f.experience) n++
   if (f.postedWithin) n++
+  if (f.discoveredWithin) n++
   if (f.hasSalary) n++
   if (f.company) n++
   if (f.skill) n++
