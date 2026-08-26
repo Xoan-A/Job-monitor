@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from sqlalchemy import BigInteger, and_, cast, func, or_, select, String
+from sqlalchemy import BigInteger, and_, cast, delete, func, or_, select, String
 
 from scraper.config import load_config, get_database_config
 from scraper.database import Database, JobRecord
@@ -533,6 +533,22 @@ async def job_facets():
         )
 
 
+@app.get("/jobs/purgeable")
+async def count_purgeable_jobs(
+    days: int = Query(45, ge=0),
+    source: Optional[str] = Query(None),
+):
+    db = get_db()
+    with db.session() as session:
+        stmt = select(func.count(JobRecord.id)).where(
+            JobRecord.published_at < func.now() - func.make_interval(0, 0, 0, days)
+        )
+        if source:
+            stmt = stmt.where(JobRecord.source == source)
+        count = session.scalar(stmt) or 0
+        return {"count": count, "older_than_days": days, "source": source}
+
+
 def _get_record_or_404(session, job_id: int) -> JobRecord:
     record = session.get(JobRecord, job_id)
     if not record:
@@ -625,3 +641,20 @@ async def stats_summary():
             ).all()
         ]
         return SummaryResponse(total=total, saved=saved, unread=unread, by_status=by_status, by_source=by_source)
+
+
+@app.delete("/jobs/cleanup")
+async def cleanup_old_jobs(
+    days: int = Query(45, ge=0, description="Remove jobs older than N days"),
+    source: Optional[str] = Query(None, description="Limit to a specific source"),
+):
+    db = get_db()
+    with db.session() as session:
+        stmt = delete(JobRecord).where(
+            JobRecord.published_at < func.now() - func.make_interval(0, 0, 0, days)
+        )
+        if source:
+            stmt = stmt.where(JobRecord.source == source)
+        result = session.execute(stmt)
+        session.commit()
+        return {"deleted": result.rowcount, "older_than_days": days, "source": source}

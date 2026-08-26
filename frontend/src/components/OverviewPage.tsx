@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { EmptyState } from './states'
 import { JOB_STATUSES, STATUS_LABELS, type JobStatus } from '../types'
@@ -13,7 +14,24 @@ export function OverviewPage() {
     selectJob,
     jobsLoading,
     sourceKind,
+    cleanupOldJobs,
+    getPurgeableCount,
+    openConfirm,
   } = useApp()
+
+  const [purgeInput, setPurgeInput] = useState('45')
+  const [purging, setPurging] = useState(false)
+  const [purgeableCount, setPurgeableCount] = useState<number | null>(null)
+
+  const parsedDays = Math.max(0, Number(purgeInput) || 0)
+
+  useEffect(() => {
+    let cancelled = false
+    getPurgeableCount(parsedDays).then((count) => {
+      if (!cancelled) setPurgeableCount(count)
+    })
+    return () => { cancelled = true }
+  }, [parsedDays, getPurgeableCount])
 
   if (!summary) {
     return (
@@ -119,6 +137,69 @@ export function OverviewPage() {
           )}
         </section>
       </div>
+
+      <section className="overview__purge">
+        <div className="overview__purge-header">
+          <h3>Purge old jobs</h3>
+          <span className="overview__purge-count">
+            {purgeableCount !== null && (
+              purgeableCount === 0 ? 'Nothing to purge' : parsedDays === 0 ? `${purgeableCount} total` : `${purgeableCount} removable`
+            )}
+          </span>
+        </div>
+        <p className="overview__muted">Remove jobs older than a number of days based on their published date.</p>
+        <div className="overview__purge-row">
+          <label className="overview__purge-label">
+            Keep last
+            <input
+              type="number"
+              min={0}
+              value={purgeInput}
+              onChange={(e) => {
+                const v = e.target.value
+                if (v === '') {
+                  setPurgeInput('')
+                  return
+                }
+                const n = Number(v)
+                if (!Number.isNaN(n) && n >= 0) {
+                  setPurgeInput(v)
+                }
+              }}
+              onBlur={() => {
+                if (purgeInput === '' || Number(purgeInput) < 0) {
+                  setPurgeInput('0')
+                }
+              }}
+              className="overview__purge-input"
+            />
+            days
+          </label>
+          <button
+            type="button"
+            className="btn btn--danger btn--sm"
+            disabled={purging || purgeableCount === 0}
+            onClick={() => {
+              openConfirm({
+                title: 'Purge old jobs',
+                message: parsedDays === 0
+                  ? `All ${purgeableCount} job${purgeableCount !== 1 ? 's' : ''} will be permanently deleted.`
+                  : `${purgeableCount} job${purgeableCount !== 1 ? 's' : ''} older than ${parsedDays} days will be permanently deleted.`,
+                confirmLabel: 'Purge',
+                danger: true,
+                onConfirm: async () => {
+                  setPurging(true)
+                  await cleanupOldJobs(parsedDays)
+                  setPurgeableCount(0)
+                  setPurging(false)
+                },
+              })
+            }}
+          >
+            {purging ? 'Purging...' : 'Purge'}
+          </button>
+        </div>
+      </section>
     </div>
   )
 }

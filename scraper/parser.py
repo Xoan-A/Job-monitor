@@ -23,7 +23,7 @@ def parse_listing_html(html: str) -> List[Job]:
 
 
 def parse_api(data: List[dict]) -> List[Job]:
-    return [_map_job(raw) for raw in data]
+    return [job for job in (_map_job(raw) for raw in data) if job is not None]
 
 
 def _map_job(raw: Dict[str, Any]) -> Job:
@@ -35,8 +35,11 @@ def _map_job(raw: Dict[str, Any]) -> Job:
     if not url:
         url = _build_url(str(raw_id), raw.get("CargoVacante", ""), city)
 
+    if raw_id is None:
+        return None
+
     return Job(
-        id=int(raw_id) if raw_id is not None else 0,
+        id=int(raw_id),
         title=raw.get("CargoVacante", ""),
         url=url,
         company=raw.get("NombreEmpresa"),

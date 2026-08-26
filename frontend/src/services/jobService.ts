@@ -21,6 +21,8 @@ export interface JobService {
   bulkUpdate(ids: number[], patch: Omit<JobPatchInput, 'notes'>): Promise<{ updated: number }>
   getFacets(): Promise<Facets>
   getSummary(): Promise<SummaryStats>
+  cleanupOldJobs(days: number, source?: string): Promise<{ deleted: number }>
+  getPurgeableCount(days: number, source?: string): Promise<{ count: number }>
 }
 
 export class ServiceError extends Error {
@@ -167,5 +169,19 @@ export class ApiJobService implements JobService {
       byStatus,
       bySource: (raw.by_source || []).map((s: any) => ({ name: s.source, count: s.count })),
     }
+  }
+
+  async cleanupOldJobs(days: number, source?: string): Promise<{ deleted: number }> {
+    const params = new URLSearchParams({ days: String(days) })
+    if (source) params.set('source', source)
+    const res = await request<any>(`/jobs/cleanup?${params}`, { method: 'DELETE' })
+    return { deleted: res.deleted ?? 0 }
+  }
+
+  async getPurgeableCount(days: number, source?: string): Promise<{ count: number }> {
+    const params = new URLSearchParams({ days: String(days) })
+    if (source) params.set('source', source)
+    const res = await request<any>(`/jobs/purgeable?${params}`)
+    return { count: res.count ?? 0 }
   }
 }

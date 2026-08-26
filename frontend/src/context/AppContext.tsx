@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import type { ConfirmOptions } from '../components/Dialogs'
 import {
   EMPTY_FILTERS,
   JOB_STATUSES,
@@ -81,12 +82,18 @@ interface AppState {
   summary: SummaryStats | null
   facets: Facets | null
   refreshStats: () => void
+  cleanupOldJobs: (days: number, source?: string) => Promise<number>
+  getPurgeableCount: (days: number, source?: string) => Promise<number>
 
   sidebarCollapsed: boolean
   toggleSidebar: () => void
 
   openDialog: 'settings' | 'about' | null
   setOpenDialog: (d: 'settings' | 'about' | null) => void
+
+  confirmState: ConfirmOptions | null
+  openConfirm: (options: ConfirmOptions) => void
+  closeConfirm: () => void
 
   mobileView: 'list' | 'detail'
   searchInputRef: React.RefObject<HTMLInputElement> | null
@@ -154,6 +161,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [openDialog, setOpenDialog] = useState<'settings' | 'about' | null>(null)
+  const [confirmState, setConfirmState] = useState<ConfirmOptions | null>(null)
+
+  const openConfirm = useCallback((options: ConfirmOptions) => {
+    setConfirmState(options)
+  }, [])
+
+  const closeConfirm = useCallback(() => {
+    setConfirmState(null)
+  }, [])
   const [toasts, setToasts] = useState<Toast[]>([])
   const toastIdRef = useRef(0)
   const searchInputRef = useRef<HTMLInputElement | null>(null)
@@ -466,6 +482,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return n
   }, [filters])
 
+  const cleanupOldJobs = useCallback(
+    async (days: number, source?: string) => {
+      if (!service) return 0
+      try {
+        const result = await service.cleanupOldJobs(days, source)
+        pushToast(`Purged ${result.deleted} old jobs`)
+        refreshJobs()
+        refreshStats()
+        return result.deleted
+      } catch (err) {
+        pushToast(errorMessage(err))
+        return 0
+      }
+    },
+    [service, pushToast, refreshJobs, refreshStats],
+  )
+
+  const getPurgeableCount = useCallback(
+    async (days: number, source?: string) => {
+      if (!service) return 0
+      try {
+        const result = await service.getPurgeableCount(days, source)
+        return result.count
+      } catch {
+        return 0
+      }
+    },
+    [service],
+  )
+
   const value: AppState = {
     service,
     sourceKind,
@@ -506,10 +552,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     summary,
     facets,
     refreshStats,
+    cleanupOldJobs,
+    getPurgeableCount,
     sidebarCollapsed,
     toggleSidebar: () => setSidebarCollapsed((v) => !v),
     openDialog,
     setOpenDialog,
+    confirmState,
+    openConfirm,
+    closeConfirm,
     mobileView,
     searchInputRef,
     toasts,

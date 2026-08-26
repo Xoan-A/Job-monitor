@@ -108,7 +108,7 @@ class JobRecord(Base):
             city=job.city,
             department=job.department,
             country=job.country,
-            published_at=datetime.fromisoformat(job.published_at.replace("Z", "+00:00")) if job.published_at else None,
+            published_at=datetime.fromisoformat(job.published_at.replace("Z", "+00:00")) if job.published_at else func.now(),
             modality=job.modality,
             channel=job.channel,
             subchannel=job.subchannel,
@@ -196,7 +196,15 @@ class Database:
                     JobRecord.source == job.source,
                     JobRecord.external_id == str(job.id)
                 ).first()
-                
+
+                if not existing and job.url:
+                    existing = session.query(JobRecord).filter(
+                        JobRecord.source == job.source,
+                        JobRecord.url == job.url,
+                    ).first()
+                    if existing:
+                        existing.external_id = str(job.id)
+
                 record = JobRecord.from_job(job)
                 
                 if existing:

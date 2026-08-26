@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import logging
 import time
 from typing import Any, Dict, List, Optional
@@ -93,7 +94,7 @@ class GetonbrdScraper(BaseScraper):
         if isinstance(job_id, str) and job_id.isdigit():
             job_id = int(job_id)
         elif isinstance(job_id, str):
-            job_id = hash(job_id) & 0x7FFFFFFF
+            job_id = int(hashlib.md5(job_id.encode()).hexdigest()[:8], 16)
 
         title = attrs.get("title", "")
 

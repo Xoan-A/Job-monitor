@@ -2,12 +2,16 @@
 
 Automated job scraping and monitoring pipeline with a full review workspace, built with n8n, Python/FastAPI, PostgreSQL and React.
 
+![Frontend Overview](docs/screenshots/Frontend%20Overview.jpg)
+
 ## Stack
 
-- **n8n** – workflow automation and orchestration
+- **n8n** – workflow automation, scheduled scraping and Discord notifications
 - **FastAPI (Python)** – scraper + REST API for jobs
 - **PostgreSQL** – storage
 - **React + TypeScript (Vite)** – web frontend
+
+![Frontend Jobs and Filters](docs/screenshots/Frontend%20Jobs%20and%20Filters.jpg)
 
 ## Getting Started
 
@@ -52,9 +56,15 @@ curl -X POST http://localhost:8000/scrape -H "Content-Type: application/json" \
 
 | Source | API | Full descriptions | Coverage |
 |--------|-----|-------------------|----------|
-| **Buscojobs** | REST API | ✅ | Uruguay |
-| **Jooble** | REST API | ⚠️ Snippets only | Uruguay (aggregator) |
-| **Get on Board** | Public API | ✅ Structured (description, functions, benefits, requirements) | LATAM (Chile, Argentina, Brazil, Mexico, Colombia, Peru, Uruguay) |
+| **Buscojobs** | REST API | Yes | Uruguay |
+| **Jooble** | REST API | Snippets only (link to full listing) | Uruguay (aggregator) |
+| **Get on Board** | Public API | Structured (description, functions, benefits, requirements) | LATAM (Chile, Argentina, Brazil, Mexico, Colombia, Peru, Uruguay) |
+
+### Automation
+
+![n8n Scraper Automation](docs/screenshots/n8n%20Scrapper%20automation%20and%20discord%20notification.jpg)
+
+n8n handles scheduled scraping runs and sends Discord notifications when new jobs are found. Workflows are defined in `n8n/workflows/` and can be imported directly.
 
 ## API overview
 
@@ -65,6 +75,8 @@ curl -X POST http://localhost:8000/scrape -H "Content-Type: application/json" \
 | `PATCH /jobs/{id}`    | Update `user_status` / `is_saved` / `notes` / mark reviewed |
 | `POST /jobs/bulk`     | Bulk status/save/review updates                      |
 | `GET /jobs/facets`    | Distinct filter values with counts                   |
+| `GET /jobs/purgeable` | Count of jobs older than N days                      |
+| `DELETE /jobs/cleanup`| Remove jobs older than N days                        |
 | `GET /stats/summary`  | Totals by status and source                          |
 | `POST /scrape`        | Trigger a background scrape                          |
 | `GET /health`         | Health check                                         |
@@ -92,8 +104,8 @@ job-monitor/
 │   ├── getonbrd_scraper.py
 │   └── api.py
 ├── database/schema.sql  # reference schema
-├── n8n/workflows/
-└── docs/
+├── n8n/workflows/       # n8n automation workflows
+└── docs/screenshots/    # UI and workflow screenshots
 ```
 
 ## Local frontend development
@@ -105,11 +117,25 @@ npm run dev        # dev server on :5173, proxies /api to localhost:8000
 npm run build      # typecheck + production build
 ```
 
-## Roadmap
+## Tests
 
-- [x] Job scrapers (Buscojobs, Jooble, Get on Board)
-- [x] REST API with user workflow state
-- [x] Web review workspace
-- [x] Idempotent upserts (no unnecessary updates)
-- [ ] n8n scheduled workflows
-- [ ] Tests
+Tests are not yet implemented. What should be covered:
+
+**Scraper tests:**
+- `models.py` — `Job.to_dict()` round-trip, `ScrapeResult` serialization
+- `config.py` — `${ENV_VAR}` substitution, missing env var fallback, config loading
+- `base.py` — `ScraperRegistry.create()` with valid/invalid names, `BaseScraper.scrape()` page iteration and dedup
+- `parser.py` — Buscojobs field mapping, missing `IdOferta` returns None
+- `database.py` — `upsert_jobs` idempotency (no duplicates on re-run), URL fallback dedup, `published_at` fallback to `created_at`
+- `api.py` — filter queries, purgeable count, cleanup endpoint, match scoring
+
+**Frontend tests:**
+- `services/jobService.ts` — API param building, error handling, `ServiceError` mapping
+- `services/mock/mockJobService.ts` — mock data consistency
+- `context/AppContext.tsx` — filter state, section navigation, `applySavedSearch`
+- `lib/format.ts` — `sourceLabel()`, `decodeEntities()`, `sanitizeHtml()`, `timeAgo()`
+- `components/` — render tests for key components (JobList, JobDetail, FilterToolbar)
+
+## Further documentation
+
+- `scraper/README.md` — scraper architecture, adding new sources, API reference

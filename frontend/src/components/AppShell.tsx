@@ -6,7 +6,7 @@ import { FilterToolbar } from './FilterToolbar'
 import { JobList } from './JobList'
 import { JobDetail } from './JobDetail'
 import { OverviewPage } from './OverviewPage'
-import { Dialogs, Toasts } from './Dialogs'
+import { Dialogs, ConfirmDialog, Toasts } from './Dialogs'
 
 export function AppShell() {
   const {
@@ -78,6 +78,7 @@ export function AppShell() {
         )}
       </div>
       <Dialogs />
+      <ConfirmDialog />
       <Toasts />
     </div>
   )

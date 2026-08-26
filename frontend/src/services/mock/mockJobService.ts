@@ -161,4 +161,14 @@ export class MockJobService implements JobService {
       bySource: [...sourceCounts.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count),
     }
   }
+
+  async cleanupOldJobs(_days: number, _source?: string): Promise<{ deleted: number }> {
+    await delay(100)
+    return { deleted: 0 }
+  }
+
+  async getPurgeableCount(_days: number, _source?: string): Promise<{ count: number }> {
+    await delay(50)
+    return { count: 0 }
+  }
 }
