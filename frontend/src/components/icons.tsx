@@ -51,13 +51,6 @@ export const IconBriefcase = (p: IconProps) => (
   </svg>
 )
 
-export const IconBuilding = (p: IconProps) => (
-  <svg {...base(p)}>
-    <rect x="5" y="3" width="14" height="18" rx="1" />
-    <path d="M9 7h2m2 0h2M9 11h2m2 0h2M9 15h2m2 0h2M12 21v-3" />
-  </svg>
-)
-
 export const IconMapPin = (p: IconProps) => (
   <svg {...base(p)}>
     <path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z" />
@@ -65,30 +58,10 @@ export const IconMapPin = (p: IconProps) => (
   </svg>
 )
 
-export const IconClock = (p: IconProps) => (
-  <svg {...base(p)}>
-    <circle cx="12" cy="12" r="9" />
-    <path d="M12 7v5l3 2" />
-  </svg>
-)
-
-export const IconCalendar = (p: IconProps) => (
-  <svg {...base(p)}>
-    <rect x="3" y="5" width="18" height="16" rx="2" />
-    <path d="M8 3v4m8-4v4M3 10h18" />
-  </svg>
-)
-
 export const IconExternalLink = (p: IconProps) => (
   <svg {...base(p)}>
     <path d="M15 4h5v5M20 4l-8 8" />
     <path d="M19 14v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" />
-  </svg>
-)
-
-export const IconChevronDown = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="m6 9 6 6 6-6" />
   </svg>
 )
 
@@ -159,13 +132,6 @@ export const IconStar = (p: IconProps) => (
   </svg>
 )
 
-export const IconTag = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9Z" />
-    <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none" />
-  </svg>
-)
-
 export const IconAlert = (p: IconProps) => (
   <svg {...base(p)}>
     <path d="M12 3 2 20h20L12 3Z" />
@@ -176,12 +142,6 @@ export const IconAlert = (p: IconProps) => (
 export const IconRefresh = (p: IconProps) => (
   <svg {...base(p)}>
     <path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5" />
-  </svg>
-)
-
-export const IconDollar = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="M12 2v20M17 6.5C16 5 14 4.5 12 4.5s-4 1-4 3 2 2.7 4 3.2 4.4 1.2 4.4 3.6-2.1 3.4-4.4 3.4-4.2-.8-5-2.2" />
   </svg>
 )
 

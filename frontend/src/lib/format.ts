@@ -69,18 +69,6 @@ export function decodeEntities(text: string): string {
     .replace(/&ndash;/gi, '–')
 }
 
-/** Render plain-text descriptions: blank-line paragraphs, "- "/"• " bullets preserved. */
-export function renderDescriptionBlocks(text: string): { type: 'p' | 'li'; text: string }[] {
-  const blocks: { type: 'p' | 'li'; text: string }[] = []
-  for (const line of text.split(/\r?\n/)) {
-    const trimmed = line.trim()
-    if (!trimmed) continue
-    const bullet = /^([-*•·])\s+/.exec(trimmed)
-    blocks.push({ type: bullet ? 'li' : 'p', text: bullet ? trimmed.replace(/^([-*•·])\s+/, '') : trimmed })
-  }
-  return blocks
-}
-
 export function matchLabel(score: number | null): string | null {
   if (score === null) return null
   if (score >= 75) return 'Strong match'

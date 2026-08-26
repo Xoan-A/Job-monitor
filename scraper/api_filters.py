@@ -80,7 +80,7 @@ def _to_response(r: JobRecord) -> JobResponse:
         country=r.country,
         location=_compose_location(r),
         published_at=_iso(r.published_at),
-        scraped_at=_iso(r.scraped_at) if hasattr(r, "scraped_at") else None,
+        scraped_at=None,
         modality=r.modality,
         channel=r.channel,
         subchannel=r.subchannel,

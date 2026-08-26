@@ -10,6 +10,7 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
+    Index,
     Integer,
     String,
     Text,
@@ -33,6 +34,9 @@ class JobRecord(Base):
     __tablename__ = "jobs"
     __table_args__ = (
         UniqueConstraint("source", "external_id", name="uq_source_external_id"),
+        Index("ix_jobs_user_status_created", "user_status", "created_at"),
+        Index("ix_jobs_source_published", "source", "published_at"),
+        Index("ix_jobs_is_saved", "is_saved"),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)

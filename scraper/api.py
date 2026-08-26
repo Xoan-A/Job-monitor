@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import hmac
 import json
 import logging
 import os
@@ -101,7 +102,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         key = request.headers.get("X-API-Key") or request.query_params.get("api_key")
-        if key != self.api_key:
+        if not key or not hmac.compare_digest(key, self.api_key):
             return Response(status_code=401, content="Invalid or missing API key")
         return await call_next(request)
 
@@ -117,7 +118,7 @@ async def health():
             session.scalar(select(1))
         return {"status": "ok", "database": "ok"}
     except Exception as exc:
-        return {"status": "ok", "database": f"unavailable: {exc}"}
+        raise HTTPException(status_code=503, detail={"status": "error", "database": f"unavailable: {exc}"})
 
 
 def _run_cmd(cmd: List[str]) -> subprocess.CompletedProcess:
@@ -361,20 +362,16 @@ def _apply_patch(record: JobRecord, patch: JobPatch):
 async def bulk_update(req: BulkPatchRequest):
     db = get_db()
     updated = 0
-    missing = 0
     with db.session() as session:
-        for job_id in req.ids[:1000]:
-            record = session.get(JobRecord, job_id)
-            if not record:
-                missing += 1
-                continue
-            patch = JobPatch(
-                user_status=req.user_status,
-                is_saved=req.is_saved,
-                mark_reviewed=req.mark_reviewed,
-            )
-            _apply_patch(record, patch)
+        ids = req.ids[:1000]
+        records = session.scalars(
+            select(JobRecord).where(JobRecord.id.in_(ids))
+        ).all()
+        id_set = set(ids)
+        for record in records:
+            _apply_patch(record, req)
             updated += 1
+        missing = len(id_set) - len(records)
     return {"updated": updated, "missing": missing}
 
 
