@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
@@ -23,6 +24,13 @@ class BaseScraper(ABC):
         self.config = config
         self.name = config.name
         self.params = config.params
+        self._last_request: float = 0.0
+
+    def _rate_limit(self):
+        elapsed = time.time() - self._last_request
+        if elapsed < self.config.rate_limit:
+            time.sleep(self.config.rate_limit - elapsed)
+        self._last_request = time.time()
 
     @abstractmethod
     def fetch_page(self, page: int, page_size: int, term: Optional[str] = None) -> List[dict]:

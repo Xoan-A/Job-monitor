@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 from bs4 import BeautifulSoup
 
 from .models import Job
+from .utils import slugify_url
 
 SITE_BASE = "https://www.buscojobs.com.uy"
 
@@ -82,13 +83,6 @@ def _nested(raw: Dict[str, Any], outer: str, inner: str) -> Optional[str]:
 
 
 def _build_url(offer_id: str, title: str, city: Optional[str]) -> str:
-    slug_title = _slugify(title)
-    slug_city = _slugify(city or "uruguay")
+    slug_title = slugify_url(title)
+    slug_city = slugify_url(city or "uruguay")
     return f"{SITE_BASE}/{slug_title}-en-{slug_city}-ID-{offer_id}"
-
-
-def _slugify(text: str) -> str:
-    text = unicodedata.normalize("NFKD", text)
-    text = "".join(c for c in text if not unicodedata.combining(c))
-    text = re.sub(r"[^a-z0-9\s-]", "", text.lower())
-    return re.sub(r"[\s-]+", "-", text).strip("-")

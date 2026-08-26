@@ -22,16 +22,9 @@ class JoobleScraper(BaseScraper):
         self.country = config.params.get("country", "uy")
         self.location = config.params.get("location", self.country)
         self.page_size = config.params.get("page_size", 20)
-        self._last_request = 0.0
 
         if not self.api_key:
             raise ValueError("Jooble API key is required (set JOOBLE_API_KEY env var)")
-
-    def _rate_limit(self):
-        elapsed = time.time() - self._last_request
-        if elapsed < self.config.rate_limit:
-            time.sleep(self.config.rate_limit - elapsed)
-        self._last_request = time.time()
 
     def _post(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         url = f"{self.api_base}/{self.api_key}"

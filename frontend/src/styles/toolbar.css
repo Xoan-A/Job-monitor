@@ -1,0 +1,87 @@
+/* ------------------------------------------------------------
+   Filter toolbar
+   ------------------------------------------------------------ */
+.toolbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  /* keep filter/sort dropdowns above the job list pane */
+  position: relative;
+  z-index: 45;
+}
+
+.toolbar__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  flex-wrap: wrap;
+}
+
+.toolbar__spacer {
+  flex: 1;
+}
+
+.toolbar__more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: 5px 9px;
+}
+.toolbar__more-btn:hover {
+  background: var(--muted-bg);
+}
+.toolbar__more-btn--active,
+.toolbar__more-btn[aria-expanded='true'] {
+  color: var(--accent-strong);
+  border-color: var(--border-strong);
+  background: var(--surface-alt);
+}
+
+.toolbar__more-count {
+  background: var(--accent);
+  color: #fff;
+  font-size: 10.5px;
+  min-width: 15px;
+  height: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0 4px;
+}
+
+.toolbar__count {
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.toolbar__more-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  padding: 12px 20px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-alt);
+}
+
+.toolbar__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
+}
+
+.toolbar__field label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+}

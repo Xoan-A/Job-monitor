@@ -1,0 +1,108 @@
+/* ------------------------------------------------------------
+   Buttons
+   ------------------------------------------------------------ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  white-space: nowrap;
+}
+
+.btn--primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn--primary:hover {
+  background: var(--accent-strong);
+  text-decoration: none;
+}
+
+.btn--secondary {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.btn--secondary:hover {
+  background: var(--muted-bg);
+  text-decoration: none;
+}
+
+.btn--secondary.btn--saved {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.btn--ghost {
+  color: var(--text-secondary);
+}
+.btn--ghost:hover {
+  background: var(--muted-bg);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.btn--danger {
+  color: #fff;
+  background: var(--danger, #dc3545);
+  border-color: var(--danger, #dc3545);
+}
+.btn--danger:hover {
+  background: var(--danger-hover, #c82333);
+  border-color: var(--danger-hover, #c82333);
+}
+.btn--danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn--sm {
+  padding: 5px 10px;
+  font-size: 12.5px;
+}
+.btn--xs {
+  padding: 3px 8px;
+  font-size: 12px;
+}
+.btn--block {
+  width: 100%;
+  justify-content: center;
+}
+
+.icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+.icon-btn:hover,
+.icon-btn--active {
+  background: var(--muted-bg);
+  color: var(--text);
+}
+.icon-btn--sm {
+  width: 24px;
+  height: 24px;
+}
+.icon-btn__badge {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--danger);
+  border: 1.5px solid var(--surface);
+}

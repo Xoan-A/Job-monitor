@@ -2,7 +2,6 @@ from .base import BaseScraper, ScraperConfig, ScraperRegistry
 from .buscojobs_scraper import BuscojobsScraper
 from .config import load_config, get_scraper_configs, get_database_config
 from .database import Database, JobRecord, ScrapeRunRecord
-from .fetcher import FetchError, fetch_listing_html, fetch_ofertas_api, fetch_count_api
 from .getonbrd_scraper import GetonbrdScraper
 from .jooble_scraper import JoobleScraper
 from .models import Job, ScrapeResult
@@ -21,10 +20,6 @@ __all__ = [
     "Database",
     "JobRecord",
     "ScrapeRunRecord",
-    "FetchError",
-    "fetch_listing_html",
-    "fetch_ofertas_api",
-    "fetch_count_api",
     "Job",
     "ScrapeResult",
     "parse_listing_html",

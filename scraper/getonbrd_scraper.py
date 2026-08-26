@@ -21,13 +21,6 @@ class GetonbrdScraper(BaseScraper):
         self.country_code = config.params.get("country_code", "UY")
         self.page_size = config.params.get("page_size", 120)
         self.lang = config.params.get("lang", "en")
-        self._last_request = 0.0
-
-    def _rate_limit(self):
-        elapsed = time.time() - self._last_request
-        if elapsed < self.config.rate_limit:
-            time.sleep(self.config.rate_limit - elapsed)
-        self._last_request = time.time()
 
     def _get(self, url: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         headers = {

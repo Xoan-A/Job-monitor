@@ -9,6 +9,7 @@ import requests
 from .base import BaseScraper, ScraperConfig, ScraperRegistry
 from .models import Job
 from .parser import parse_listing_html, parse_api
+from .utils import slugify_url
 
 logger = logging.getLogger(__name__)
 
@@ -21,14 +22,7 @@ class BuscojobsScraper(BaseScraper):
         self.api_base = config.params.get("api_base", f"https://api.buscojobs.com/v3/{self.country}")
         self.site_base = config.params.get("site_base", f"https://www.buscojobs.com.uy")
         self.page_size = config.params.get("page_size", 15)
-        self._last_request = 0.0
         self._api_endpoint = f"{self.api_base}/api/ofertas"
-
-    def _rate_limit(self):
-        elapsed = time.time() - self._last_request
-        if elapsed < self.config.rate_limit:
-            time.sleep(self.config.rate_limit - elapsed)
-        self._last_request = time.time()
 
     def _get(self, url: str, **kwargs: Any) -> requests.Response:
         headers = {
@@ -72,7 +66,7 @@ class BuscojobsScraper(BaseScraper):
     def fetch_listing_html(self, page: int = 1, term: Optional[str] = None) -> str:
         url = f"{self.site_base}/ofertas"
         if term:
-            url = f"{url}/{self._slugify(term)}_"
+            url = f"{url}/{slugify_url(term)}_"
         if page > 1:
             url = f"{url}/{page}"
         response = self._get(url)
@@ -85,12 +79,3 @@ class BuscojobsScraper(BaseScraper):
     def _dumps(value: Any) -> str:
         import json
         return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
-
-    @staticmethod
-    def _slugify(text: str) -> str:
-        import re
-        import unicodedata
-        text = unicodedata.normalize("NFKD", text)
-        text = "".join(c for c in text if not unicodedata.combining(c))
-        text = re.sub(r"[^a-z0-9\s-]", "", text.lower())
-        return re.sub(r"[\s-]+", "-", text).strip("-")

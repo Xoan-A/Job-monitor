@@ -1,0 +1,221 @@
+.text-input {
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+}
+.text-input::placeholder {
+  color: var(--text-tertiary);
+}
+.text-input:focus-visible {
+  outline-offset: 0;
+  border-color: var(--accent);
+}
+.text-input--sm {
+  padding: 5px 8px;
+  font-size: 12.5px;
+}
+
+/* ------------------------------------------------------------
+   Dropdown primitive
+   ------------------------------------------------------------ */
+.dropdown {
+  position: relative;
+  display: inline-flex;
+}
+
+.dropdown__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  min-width: 180px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  z-index: 60;
+  padding: 4px;
+  animation: dropdown-in 0.1s ease-out;
+}
+
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown__menu--right {
+  right: 0;
+}
+.dropdown__menu--left {
+  left: 0;
+}
+
+.dropdown__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 13px;
+  text-align: left;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+}
+.dropdown__item:hover {
+  background: var(--muted-bg);
+}
+.dropdown__item--selected {
+  color: var(--accent);
+  font-weight: 500;
+}
+.dropdown__item-check {
+  width: 14px;
+  display: inline-flex;
+  justify-content: center;
+  color: var(--accent);
+}
+
+.dropdown__section-title {
+  padding: 6px 10px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+/* Select buttons used in the filter toolbar */
+.select-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  font-size: 12.5px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  max-width: 220px;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+.select-btn:hover {
+  background: var(--surface-alt);
+}
+.select-btn--open {
+  border-color: var(--accent);
+}
+.select-btn--active {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+.select-btn--active .select-btn__value,
+.select-btn--active .select-btn__label {
+  color: var(--accent-strong);
+}
+.select-btn__label {
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+.select-btn__value {
+  color: var(--text);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.select-btn__value--placeholder {
+  color: var(--text-tertiary);
+  font-weight: 400;
+}
+
+/* Checkbox */
+.jm-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 3px;
+  background: var(--surface);
+  color: #fff;
+  transition: background-color 0.1s ease, border-color 0.1s ease;
+}
+.jm-checkbox:hover {
+  border-color: var(--accent);
+}
+.jm-checkbox--checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Toggle switch */
+.jm-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+.jm-toggle__track {
+  width: 28px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--border-strong);
+  position: relative;
+  transition: background-color 0.15s ease;
+  flex-shrink: 0;
+}
+.jm-toggle__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease;
+}
+.jm-toggle--on .jm-toggle__track {
+  background: var(--accent);
+}
+.jm-toggle--on .jm-toggle__thumb {
+  transform: translateX(12px);
+}
+
+/* Tags */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--muted-bg);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+.tag--more {
+  color: var(--text-tertiary);
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+}
