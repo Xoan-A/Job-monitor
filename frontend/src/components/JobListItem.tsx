@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { useApp } from '../context/AppContext'
 import type { Job } from '../types'
 import { matchLabel, remoteLabelFromModality, sourceLabel, timeAgo } from '../lib/format'
@@ -13,7 +14,7 @@ interface JobListItemProps {
   onToggleCheck: (checked: boolean) => void
 }
 
-export function JobListItem({ job, selected, checked, onSelect, onToggleCheck }: JobListItemProps) {
+export const JobListItem = memo(function JobListItem({ job, selected, checked, onSelect, onToggleCheck }: JobListItemProps) {
   const { toggleSaved } = useApp()
 
   return (
@@ -104,7 +105,7 @@ export function JobListItem({ job, selected, checked, onSelect, onToggleCheck }:
       </div>
     </li>
   )
-}
+})
 
 function firstSentence(job: Job): string {
   if (!job.description) return ''

@@ -42,7 +42,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       ...init,
     })
   } catch (err) {
-    throw new ServiceError('No se pudo conectar con el servidor.', err)
+    throw new ServiceError('Could not connect to the server.', err)
   }
   if (!res.ok) {
     let detail = ''
@@ -56,8 +56,67 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-function mapApiJob(raw: any): Job {
+interface ApiJob {
+  id: number
+  source: string
+  external_id: string | null
+  title: string
+  company: string | null
+  description: string | null
+  location: string | null
+  city: string | null
+  department: string | null
+  country: string | null
+  url: string | null
+  application_url: string | null
+  published_at: string | null
+  scraped_at: string | null
+  modality: string | null
+  job_type: string | null
+  salary: string | null
+  tags: (string | number)[]
+  experience_level: string | null
+  is_confidential: boolean
+  user_status: string
+  is_saved: boolean
+  notes: string | null
+  reviewed_at: string | null
+  created_at: string | null
+  updated_at: string | null
+  match_score: number | null
+  match_strong: string[]
+  match_gaps: string[]
+}
+
+interface ApiJobsPageResponse {
+  jobs: ApiJob[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
+interface ApiFacetItem {
+  source?: string
+  count: number
+}
+
+interface ApiFacetsResponse {
+  sources: ApiFacetItem[]
+  locations: string[]
+  employment_types: string[]
+  experience_levels: string[]
+}
+
+interface ApiSummaryResponse {
+  total: number
+  saved: number
+  unread: number
+  by_status: { status: string; count: number }[]
+  by_source: { source: string; count: number }[]
+}
+
+function mapApiJob(raw: ApiJob): Job {
   return {
     id: raw.id,
     source: raw.source ?? 'unknown',
@@ -116,7 +175,7 @@ export class ApiJobService implements JobService {
   readonly kind = 'api' as const
 
   async getJobs(query: JobQuery): Promise<JobsPage> {
-    const raw = await request<any>(`/jobs?${buildApiParams(query).toString()}`)
+    const raw = await request<ApiJobsPageResponse>(`/jobs?${buildApiParams(query).toString()}`)
     return {
       jobs: (raw.jobs || []).map(mapApiJob),
       total: raw.total ?? 0,
@@ -127,7 +186,7 @@ export class ApiJobService implements JobService {
   }
 
   async getJob(id: number): Promise<Job> {
-    return mapApiJob(await request<any>(`/jobs/${id}`))
+    return mapApiJob(await request<ApiJob>(`/jobs/${id}`))
   }
 
   async updateJob(id: number, patch: JobPatchInput): Promise<Job> {
@@ -136,7 +195,7 @@ export class ApiJobService implements JobService {
     if (patch.saved !== undefined) body.is_saved = patch.saved
     if (patch.notes !== undefined) body.notes = patch.notes
     if (patch.markReviewed) body.mark_reviewed = true
-    return mapApiJob(await request<any>(`/jobs/${id}`, { method: 'PATCH', body: JSON.stringify(body) }))
+    return mapApiJob(await request<ApiJob>(`/jobs/${id}`, { method: 'PATCH', body: JSON.stringify(body) }))
   }
 
   async bulkUpdate(ids: number[], patch: Omit<JobPatchInput, 'notes'>): Promise<{ updated: number }> {
@@ -144,14 +203,14 @@ export class ApiJobService implements JobService {
     if (patch.status !== undefined) body.user_status = patch.status
     if (patch.saved !== undefined) body.is_saved = patch.saved
     if (patch.markReviewed) body.mark_reviewed = true
-    const res = await request<any>('/jobs/bulk', { method: 'POST', body: JSON.stringify(body) })
+    const res = await request<{ updated: number }>('/jobs/bulk', { method: 'POST', body: JSON.stringify(body) })
     return { updated: res.updated ?? 0 }
   }
 
   async getFacets(): Promise<Facets> {
-    const raw = await request<any>('/jobs/facets')
+    const raw = await request<ApiFacetsResponse>('/jobs/facets')
     return {
-      sources: (raw.sources || []).map((s: any) => ({ name: s.source, count: s.count })),
+      sources: (raw.sources || []).map((s) => ({ name: s.source ?? 'unknown', count: s.count })),
       locations: raw.locations || [],
       employmentTypes: raw.employment_types || [],
       experienceLevels: raw.experience_levels || [],
@@ -159,7 +218,7 @@ export class ApiJobService implements JobService {
   }
 
   async getSummary(): Promise<SummaryStats> {
-    const raw = await request<any>('/stats/summary')
+    const raw = await request<ApiSummaryResponse>('/stats/summary')
     const byStatus: Record<string, number> = {}
     for (const item of raw.by_status || []) byStatus[item.status] = item.count
     return {
@@ -167,21 +226,21 @@ export class ApiJobService implements JobService {
       saved: raw.saved ?? 0,
       unread: raw.unread ?? 0,
       byStatus,
-      bySource: (raw.by_source || []).map((s: any) => ({ name: s.source, count: s.count })),
+      bySource: (raw.by_source || []).map((s) => ({ name: s.source, count: s.count })),
     }
   }
 
   async cleanupOldJobs(days: number, source?: string): Promise<{ deleted: number }> {
     const params = new URLSearchParams({ days: String(days) })
     if (source) params.set('source', source)
-    const res = await request<any>(`/jobs/cleanup?${params}`, { method: 'DELETE' })
+    const res = await request<{ deleted: number }>(`/jobs/cleanup?${params}`, { method: 'DELETE' })
     return { deleted: res.deleted ?? 0 }
   }
 
   async getPurgeableCount(days: number, source?: string): Promise<{ count: number }> {
     const params = new URLSearchParams({ days: String(days) })
     if (source) params.set('source', source)
-    const res = await request<any>(`/jobs/purgeable?${params}`)
+    const res = await request<{ count: number }>(`/jobs/purgeable?${params}`)
     return { count: res.count ?? 0 }
   }
 }

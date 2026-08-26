@@ -74,7 +74,7 @@ class JobRecord(Base):
             except Exception:
                 tags = []
         return Job(
-            id=self.id,
+            id=int(self.external_id) if self.external_id else self.id,
             title=self.title,
             url=self.url,
             company=self.company,

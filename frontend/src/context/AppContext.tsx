@@ -160,6 +160,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [savedSearchCounts, setSavedSearchCounts] = useState<Record<string, number>>({})
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const toggleSidebar = useCallback(() => setSidebarCollapsed((v) => !v), [])
   const [openDialog, setOpenDialog] = useState<'settings' | 'about' | null>(null)
   const [confirmState, setConfirmState] = useState<ConfirmOptions | null>(null)
 
@@ -512,7 +513,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [service],
   )
 
-  const value: AppState = {
+  const value: AppState = useMemo(() => ({
     service,
     sourceKind,
     dataSourceMode,
@@ -555,7 +556,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     cleanupOldJobs,
     getPurgeableCount,
     sidebarCollapsed,
-    toggleSidebar: () => setSidebarCollapsed((v) => !v),
+    toggleSidebar,
     openDialog,
     setOpenDialog,
     confirmState,
@@ -565,7 +566,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     searchInputRef,
     toasts,
     pushToast,
-  }
+  }), [
+    service, sourceKind, dataSourceMode, setDataSourceMode,
+    nav, goToSection, filterBySource, filters, patchFilter,
+    clearFilters, activeFilterCount, applySavedSearch, savedSearchCounts,
+    sort, setSortState, jobs, totalJobs, jobsLoading, jobsLoadingMore, jobsError,
+    loadMore, refreshJobs, selectedJobId, selectJob, detail, backToList,
+    selection, toggleSelect, selectAllVisible, clearSelection,
+    toggleSaved, changeStatus, saveNotes, markReviewed, bulkAction, mutatingIds,
+    summary, facets, refreshStats, cleanupOldJobs, getPurgeableCount,
+    sidebarCollapsed, toggleSidebar, openDialog, setOpenDialog, confirmState, openConfirm, closeConfirm,
+    mobileView, searchInputRef, toasts, pushToast,
+  ])
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }
