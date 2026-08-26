@@ -1,4 +1,4 @@
-import { useApp } from '../context/AppContext'
+import { useApp } from '../context/selectors'
 import type { Job } from '../types'
 import { Dropdown } from './primitives'
 import { IconBookmark, IconBriefcase, IconExternalLink } from './icons'

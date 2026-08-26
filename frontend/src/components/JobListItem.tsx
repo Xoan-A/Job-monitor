@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { useApp } from '../context/AppContext'
+import { useApp } from '../context/selectors'
 import type { Job } from '../types'
 import { matchLabel, remoteLabelFromModality, sourceLabel, timeAgo } from '../lib/format'
 import { StatusSelector } from './StatusSelector'

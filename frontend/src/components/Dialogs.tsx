@@ -1,4 +1,4 @@
-import { useApp } from '../context/AppContext'
+import { useApp } from '../context/selectors'
 import type { DataSourceMode } from '../services'
 
 export interface ConfirmOptions {

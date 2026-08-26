@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { useApp } from '../context/AppContext'
+import { useApp } from '../context/selectors'
 import { JobListItem } from './JobListItem'
 import { BulkActionBar } from './BulkActionBar'
 import { EmptyState, ErrorState, ListSkeleton } from './states'

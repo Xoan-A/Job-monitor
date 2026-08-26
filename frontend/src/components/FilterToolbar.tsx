@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useApp } from '../context/AppContext'
+import { useApp } from '../context/selectors'
+import { useDebounce } from '../lib/useDebounce'
 import { Dropdown, FilterSelect } from './primitives'
 import { IconSliders, IconX, IconCheck } from './icons'
 import { JOB_STATUSES, STATUS_LABELS, type PostedWithinOption, type RemoteType, type SortOption } from '../types'
@@ -34,6 +35,9 @@ export function FilterToolbar() {
     activeFilterCount,
   } = useApp()
   const [moreOpen, setMoreOpen] = useState(false)
+
+  const debouncedCompany = useDebounce((v: string) => patchFilter('company', v), 300)
+  const debouncedSkill = useDebounce((v: string) => patchFilter('skill', v), 300)
 
   const moreCount = [filters.company, filters.skill, filters.experience].filter(Boolean).length
 
@@ -144,8 +148,8 @@ export function FilterToolbar() {
               type="text"
               className="text-input text-input--sm"
               placeholder="e.g. dLocal"
-              value={filters.company}
-              onChange={(e) => patchFilter('company', e.target.value)}
+              defaultValue={filters.company}
+              onChange={(e) => debouncedCompany(e.target.value)}
             />
           </div>
           <div className="toolbar__field">
@@ -155,8 +159,8 @@ export function FilterToolbar() {
               type="text"
               className="text-input text-input--sm"
               placeholder="e.g. PostgreSQL"
-              value={filters.skill}
-              onChange={(e) => patchFilter('skill', e.target.value)}
+              defaultValue={filters.skill}
+              onChange={(e) => debouncedSkill(e.target.value)}
             />
           </div>
           <div className="toolbar__field">

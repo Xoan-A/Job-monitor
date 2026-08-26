@@ -1,4 +1,4 @@
-import { useApp } from '../context/AppContext'
+import { useApp } from '../context/selectors'
 import { SAVED_SEARCHES } from '../constants/savedSearches'
 import { sourceLabel } from '../lib/format'
 import type { NavSection } from '../types'

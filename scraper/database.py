@@ -188,40 +188,86 @@ class Database:
             session.close()
 
     def upsert_jobs(self, jobs: List[Job]) -> Dict[str, int]:
+        if not jobs:
+            return {"new": 0, "updated": 0}
+
         new_count = 0
         updated_count = 0
+
         with self.session() as session:
+            url_map: Dict[str, int] = {}
             for job in jobs:
-                existing = session.query(JobRecord).filter(
-                    JobRecord.source == job.source,
-                    JobRecord.external_id == str(job.id)
-                ).first()
+                if job.url:
+                    existing_id = session.scalar(
+                        select(JobRecord.id).where(
+                            JobRecord.source == job.source,
+                            JobRecord.url == job.url,
+                        )
+                    )
+                    if existing_id:
+                        url_map[job.url] = existing_id
 
-                if not existing and job.url:
-                    existing = session.query(JobRecord).filter(
-                        JobRecord.source == job.source,
-                        JobRecord.url == job.url,
-                    ).first()
-                    if existing:
-                        existing.external_id = str(job.id)
+            records = []
+            for job in jobs:
+                record = {
+                    "source": job.source,
+                    "external_id": str(job.id),
+                    "title": job.title,
+                    "url": job.url,
+                    "company": job.company,
+                    "description": job.description,
+                    "city": job.city,
+                    "department": job.department,
+                    "country": job.country,
+                    "published_at": datetime.fromisoformat(job.published_at.replace("Z", "+00:00")) if job.published_at else func.now(),
+                    "modality": job.modality,
+                    "channel": job.channel,
+                    "subchannel": job.subchannel,
+                    "is_confidential": int(job.is_confidential),
+                    "is_featured": int(job.is_featured),
+                    "company_id": job.company_id,
+                    "salary": job.salary,
+                    "job_type": job.job_type,
+                    "tags": job.tags,
+                    "experience_level": job.experience_level,
+                    "raw_data": job.to_dict(),
+                    "user_status": "new",
+                }
+                records.append(record)
 
-                record = JobRecord.from_job(job)
-                
-                if existing:
-                    changed = False
-                    for key, value in record.__dict__.items():
-                        if key.startswith('_') or key in ('id', 'created_at', 'updated_at'):
-                            continue
-                        old_val = getattr(existing, key, None)
-                        if old_val != value:
-                            setattr(existing, key, value)
-                            changed = True
-                    if changed:
-                        existing.updated_at = func.now()
-                        updated_count += 1
-                else:
-                    session.add(record)
-                    new_count += 1
+            stmt = insert(JobRecord).values(records)
+            stmt = stmt.on_conflict_do_update(
+                index_elements=["source", "external_id"],
+                set_={
+                    "title": stmt.excluded.title,
+                    "url": stmt.excluded.url,
+                    "company": stmt.excluded.company,
+                    "description": stmt.excluded.description,
+                    "city": stmt.excluded.city,
+                    "department": stmt.excluded.department,
+                    "country": stmt.excluded.country,
+                    "published_at": stmt.excluded.published_at,
+                    "modality": stmt.excluded.modality,
+                    "channel": stmt.excluded.channel,
+                    "subchannel": stmt.excluded.subchannel,
+                    "is_confidential": stmt.excluded.is_confidential,
+                    "is_featured": stmt.excluded.is_featured,
+                    "company_id": stmt.excluded.company_id,
+                    "salary": stmt.excluded.salary,
+                    "job_type": stmt.excluded.job_type,
+                    "tags": stmt.excluded.tags,
+                    "experience_level": stmt.excluded.experience_level,
+                    "raw_data": stmt.excluded.raw_data,
+                    "updated_at": func.now(),
+                },
+            )
+            result = session.execute(stmt)
+            session.commit()
+
+            total_affected = result.rowcount
+            new_count = max(0, total_affected - len(jobs))
+            updated_count = total_affected - new_count
+
         return {"new": new_count, "updated": updated_count}
 
     def get_jobs(

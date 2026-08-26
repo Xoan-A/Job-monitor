@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useApp } from '../context/AppContext'
+import { useApp } from '../context/selectors'
 import { Dropdown } from './primitives'
 import { IconBell, IconSearch, IconSettings, IconInfo, IconX, IconUser } from './icons'
 import { sourceLabel } from '../lib/format'

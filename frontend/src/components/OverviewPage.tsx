@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useApp } from '../context/AppContext'
+import { useEffect, useRef, useState } from 'react'
+import { useApp } from '../context/selectors'
 import { EmptyState } from './states'
 import { JOB_STATUSES, STATUS_LABELS, type JobStatus } from '../types'
 import { sourceLabel, timeAgo, remoteLabelFromModality } from '../lib/format'
@@ -24,14 +24,24 @@ export function OverviewPage() {
   const [purgeableCount, setPurgeableCount] = useState<number | null>(null)
 
   const parsedDays = Math.max(0, Number(purgeInput) || 0)
+  const debouncedDaysRef = useRef(parsedDays)
+  const [debouncedDays, setDebouncedDays] = useState(parsedDays)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      debouncedDaysRef.current = parsedDays
+      setDebouncedDays(parsedDays)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [parsedDays])
 
   useEffect(() => {
     let cancelled = false
-    getPurgeableCount(parsedDays).then((count) => {
+    getPurgeableCount(debouncedDays).then((count) => {
       if (!cancelled) setPurgeableCount(count)
     })
     return () => { cancelled = true }
-  }, [parsedDays, getPurgeableCount])
+  }, [debouncedDays, getPurgeableCount])
 
   if (!summary) {
     return (

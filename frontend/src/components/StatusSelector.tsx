@@ -1,4 +1,4 @@
-import { useApp } from '../context/AppContext'
+import { useApp } from '../context/selectors'
 import { Dropdown } from './primitives'
 import { JOB_STATUSES, STATUS_LABELS, type Job, type JobStatus } from '../types'
 import { statusTone } from '../lib/format'

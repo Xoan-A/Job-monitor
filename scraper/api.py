@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import subprocess
@@ -401,7 +402,7 @@ async def scrape_sync(req: ScrapeRequest):
     if req.term:
         cmd += ["--term", req.term]
 
-    result = _run_cmd(cmd)
+    result = await asyncio.to_thread(_run_cmd, cmd)
     if result.returncode != 0:
         raise HTTPException(status_code=500, detail=result.stderr[-500:] or "Scrape failed")
 

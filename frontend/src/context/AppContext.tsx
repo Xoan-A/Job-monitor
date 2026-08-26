@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { ConfirmOptions } from '../components/Dialogs'
 import {
@@ -34,7 +34,7 @@ interface Toast {
   tone: 'error' | 'success'
 }
 
-interface AppState {
+export interface AppState {
   service: JobService | null
   sourceKind: ResolvedSource | 'loading'
   dataSourceMode: DataSourceMode
@@ -102,7 +102,7 @@ interface AppState {
   pushToast: (text: string, tone?: Toast['tone']) => void
 }
 
-const AppContext = createContext<AppState | null>(null)
+export const AppContext = createContext<AppState | null>(null)
 
 function sectionToFilters(section: NavSection): Partial<JobFilters> {
   switch (section) {
@@ -582,8 +582,4 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }
 
-export function useApp(): AppState {
-  const ctx = useContext(AppContext)
-  if (!ctx) throw new Error('useApp must be used within AppProvider')
-  return ctx
-}
+
