@@ -74,7 +74,7 @@ curl -X POST http://localhost:8000/scrape -H "Content-Type: application/json" \
 
 ### Automation
 
-![n8n Scraper Automation](docs/screenshots/n8n%20Scrapper%20automation%20and%20discord%20notification.jpg)
+![n8n Scraper Automation](docs/screenshots/n8n%20Scraper%20automation%20and%20discord%20notification.jpg)
 
 n8n handles scheduled scraping runs and sends Discord notifications when new jobs are found. Workflows are defined in `n8n/workflows/` and can be imported directly.
 
