@@ -11,6 +11,18 @@ Automated job scraping and monitoring pipeline with a full review workspace, bui
 - **PostgreSQL** – storage
 - **React + TypeScript (Vite)** – web frontend
 
+### Architecture
+
+![Architecture](docs/Architecture.png)
+
+| Service | Tech | Port | Description |
+|---------|------|------|-------------|
+| `n8n` | n8nio/n8n | 5678 | Workflow automation, scheduled scraping, Discord notifications |
+| `scraper-api` | Python 3.11 / FastAPI | 8000 | REST API + scraper orchestration |
+| `frontend` | React 18 / nginx | 5173 | SPA with reverse proxy to API |
+| `scraper-cli` | Python 3.11 | — | One-off CLI scraper runs |
+| `postgres` | PostgreSQL 16 | 5432 | Job storage + user workflow state |
+
 ![Frontend Jobs and Filters](docs/screenshots/Frontend%20Jobs%20and%20Filters.jpg)
 
 ## Getting Started
