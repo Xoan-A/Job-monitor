@@ -279,7 +279,8 @@ async def count_purgeable_jobs(
     db = get_db()
     with db.session() as session:
         stmt = select(func.count(JobRecord.id)).where(
-            JobRecord.published_at < func.now() - func.make_interval(0, 0, 0, days)
+            JobRecord.published_at < func.now() - func.make_interval(0, 0, 0, days),
+            JobRecord.user_status.in_(["new", "reviewing"]),
         )
         if source:
             stmt = stmt.where(JobRecord.source == source)
@@ -410,7 +411,8 @@ async def cleanup_old_jobs(
     db = get_db()
     with db.session() as session:
         stmt = delete(JobRecord).where(
-            JobRecord.published_at < func.now() - func.make_interval(0, 0, 0, days)
+            JobRecord.published_at < func.now() - func.make_interval(0, 0, 0, days),
+            JobRecord.user_status.in_(["new", "reviewing"]),
         )
         if source:
             stmt = stmt.where(JobRecord.source == source)

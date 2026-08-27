@@ -157,7 +157,7 @@ export function OverviewPage() {
             )}
           </span>
         </div>
-        <p className="overview__muted">Remove jobs older than a number of days based on their published date.</p>
+        <p className="overview__muted">Remove jobs in "New" or "Reviewing" status older than a number of days based on their published date. Jobs with other statuses are never pruned.</p>
         <div className="overview__purge-row">
           <label className="overview__purge-label">
             Keep last
@@ -193,8 +193,8 @@ export function OverviewPage() {
               openConfirm({
                 title: 'Purge old jobs',
                 message: parsedDays === 0
-                  ? `All ${purgeableCount} job${purgeableCount !== 1 ? 's' : ''} will be permanently deleted.`
-                  : `${purgeableCount} job${purgeableCount !== 1 ? 's' : ''} older than ${parsedDays} days will be permanently deleted.`,
+                  ? `All ${purgeableCount} job${purgeableCount !== 1 ? 's' : ''} in "New" or "Reviewing" status will be permanently deleted.`
+                  : `${purgeableCount} job${purgeableCount !== 1 ? 's' : ''} in "New" or "Reviewing" status older than ${parsedDays} days will be permanently deleted.`,
                 confirmLabel: 'Purge',
                 danger: true,
                 onConfirm: async () => {
