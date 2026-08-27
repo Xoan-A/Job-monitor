@@ -97,12 +97,17 @@ job-monitor/
 ├── frontend/            # React + TypeScript SPA (served by nginx)
 │   ├── Dockerfile
 │   ├── nginx.conf       # serves app + proxies /api -> scraper-api
-│   └── src/
+│   ├── src/
+│   └── src/test/        # vitest unit tests
 ├── scraper/             # Python scrapers + FastAPI (api.py)
 │   ├── buscojobs_scraper.py
 │   ├── jooble_scraper.py
 │   ├── getonbrd_scraper.py
-│   └── api.py
+│   ├── api.py           # route handlers
+│   ├── api_models.py    # Pydantic models
+│   ├── api_filters.py   # query filter helpers
+│   ├── utils.py         # shared utilities
+│   └── tests/           # pytest unit tests
 ├── database/schema.sql  # reference schema
 ├── n8n/workflows/       # n8n automation workflows
 └── docs/screenshots/    # UI and workflow screenshots
@@ -117,24 +122,32 @@ npm run dev        # dev server on :5173, proxies /api to localhost:8000
 npm run build      # typecheck + production build
 ```
 
-## Tests
+## Testing
 
-Tests are not yet implemented. What should be covered:
+### Backend tests (pytest)
 
-**Scraper tests:**
-- `models.py` — `Job.to_dict()` round-trip, `ScrapeResult` serialization
-- `config.py` — `${ENV_VAR}` substitution, missing env var fallback, config loading
-- `base.py` — `ScraperRegistry.create()` with valid/invalid names, `BaseScraper.scrape()` page iteration and dedup
-- `parser.py` — Buscojobs field mapping, missing `IdOferta` returns None
-- `database.py` — `upsert_jobs` idempotency (no duplicates on re-run), URL fallback dedup, `published_at` fallback to `created_at`
-- `api.py` — filter queries, purgeable count, cleanup endpoint, match scoring
+```bash
+# Run inside the scraper container
+docker compose exec scraper-api pytest scraper/tests/ -v
 
-**Frontend tests:**
-- `services/jobService.ts` — API param building, error handling, `ServiceError` mapping
-- `services/mock/mockJobService.ts` — mock data consistency
-- `context/AppContext.tsx` — filter state, section navigation, `applySavedSearch`
-- `lib/format.ts` — `sourceLabel()`, `decodeEntities()`, `sanitizeHtml()`, `timeAgo()`
-- `components/` — render tests for key components (JobList, JobDetail, FilterToolbar)
+# Or locally (requires Python + dependencies)
+cd scraper
+pip install -r requirements.txt
+pytest tests/ -v
+```
+
+Tests cover: filter building, database upsert idempotency, parser field mapping, API model serialization.
+
+### Frontend tests (vitest)
+
+```bash
+# Run inside the frontend container or locally
+cd frontend
+npm install
+npm test
+```
+
+Tests cover: `sourceLabel()`, `decodeEntities()`, `timeAgo()`, `buildApiParams()` mapping, `ServiceError` handling.
 
 ## Further documentation
 
