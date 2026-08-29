@@ -5,10 +5,10 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
-from .base import BaseScraper, ScraperConfig, ScraperRegistry
-from .models import Job
+from .base_scraper import BaseScraper, ScraperConfig, ScraperRegistry
+from ..models import Job
 from .parser import parse_listing_html, parse_api
-from .utils import slugify_url
+from ..utils import slugify_url
 
 logger = logging.getLogger(__name__)
 

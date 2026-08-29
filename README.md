@@ -7,7 +7,7 @@ Automated job scraping and monitoring pipeline with a full review workspace, bui
 ## Stack
 
 - **n8n** – workflow automation, scheduled scraping and Discord notifications
-- **FastAPI (Python)** – scraper + REST API for jobs
+- **FastAPI (Python)** – backend + REST API for jobs
 - **PostgreSQL** – storage
 - **React + TypeScript (Vite)** – web frontend
 
@@ -18,9 +18,9 @@ Automated job scraping and monitoring pipeline with a full review workspace, bui
 | Service | Tech | Port | Description |
 |---------|------|------|-------------|
 | `n8n` | n8nio/n8n | 5678 | Workflow automation, scheduled scraping, Discord notifications |
-| `scraper-api` | Python 3.11 / FastAPI | 8000 | REST API + scraper orchestration |
+| `backend-api` | Python 3.11 / FastAPI | 8000 | REST API + scraper orchestration |
 | `frontend` | React 18 / nginx | 5173 | SPA with reverse proxy to API |
-| `scraper-cli` | Python 3.11 | — | One-off CLI scraper runs |
+| `backend-cli` | Python 3.11 | — | One-off CLI scraper runs |
 | `postgres` | PostgreSQL 16 | 5432 | Job storage + user workflow state |
 
 ![Frontend Jobs and Filters](docs/screenshots/Frontend%20Jobs%20and%20Filters.jpg)
@@ -47,7 +47,7 @@ Automated job scraping and monitoring pipeline with a full review workspace, bui
    | Scraper API  | http://localhost:8000/docs     |
    | n8n          | http://localhost:5678          |
 
-The frontend proxies `/api/*` to `scraper-api` via nginx, so no CORS setup is needed in production.
+The frontend proxies `/api/*` to `backend-api` via nginx, so no CORS setup is needed in production.
 
 If the API is unreachable the frontend automatically falls back to built-in demo data (switchable in *Settings → Data source*).
 
@@ -55,9 +55,9 @@ If the API is unreachable the frontend automatically falls back to built-in demo
 
 ```bash
 # one-off scrape from the CLI service
-docker compose run --rm scraper-cli scrape buscojobs --pages 3
-docker compose run --rm scraper-cli scrape jooble --pages 2 --term "desarrollo"
-docker compose run --rm scraper-cli scrape getonbrd --pages 1 --term ".NET"
+docker compose run --rm backend-cli scrape buscojobs --pages 3
+docker compose run --rm backend-cli scrape jooble --pages 2 --term "desarrollo"
+docker compose run --rm backend-cli scrape getonbrd --pages 1 --term ".NET"
 
 # or trigger it from the API
 curl -X POST http://localhost:8000/scrape -H "Content-Type: application/json" \
@@ -95,7 +95,7 @@ n8n handles scheduled scraping runs and sends Discord notifications when new job
 
 ### Match scores (optional)
 
-Add skills to the `profile.skills` list in `scraper/config.yaml`. The API then computes a transparent keyword-overlap score per job (`match_score`, `match_strong`, `match_gaps`). Remove the section to disable matching entirely.
+Add skills to the `profile.skills` list in `backend/config.yaml`. The API then computes a transparent keyword-overlap score per job (`match_score`, `match_strong`, `match_gaps`). Remove the section to disable matching entirely.
 
 ### User workflow state
 
@@ -108,10 +108,10 @@ job-monitor/
 ├── docker-compose.yml
 ├── frontend/            # React + TypeScript SPA (served by nginx)
 │   ├── Dockerfile
-│   ├── nginx.conf       # serves app + proxies /api -> scraper-api
+│   ├── nginx.conf       # serves app + proxies /api -> backend-api
 │   ├── src/
 │   └── src/test/        # vitest unit tests
-├── scraper/             # Python scrapers + FastAPI (api.py)
+├── backend/             # Python scrapers + FastAPI (api.py)
 │   ├── buscojobs_scraper.py
 │   ├── jooble_scraper.py
 │   ├── getonbrd_scraper.py
@@ -139,11 +139,11 @@ npm run build      # typecheck + production build
 ### Backend tests (pytest)
 
 ```bash
-# Run inside the scraper container
-docker compose exec scraper-api pytest scraper/tests/ -v
+# Run inside the backend container
+docker compose exec backend-api pytest backend/tests/ -v
 
 # Or locally (requires Python + dependencies)
-cd scraper
+cd backend
 pip install -r requirements.txt
 pytest tests/ -v
 ```
@@ -163,4 +163,4 @@ Tests cover: `sourceLabel()`, `decodeEntities()`, `timeAgo()`, `buildApiParams()
 
 ## Further documentation
 
-- `scraper/README.md` — scraper architecture, adding new sources, API reference
+- `backend/README.md` — backend architecture, adding new sources, API reference

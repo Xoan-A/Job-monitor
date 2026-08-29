@@ -16,9 +16,9 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 from sqlalchemy import and_, delete, func, select
 
-from scraper.config import load_config, get_database_config
-from scraper.database import Database, JobRecord
-from scraper.base import ScraperRegistry
+from backend.config import load_config, get_database_config
+from backend.database import Database, JobRecord
+from backend.scraper.base_scraper import ScraperRegistry
 
 from .api_models import (
     BulkPatchRequest,
@@ -45,7 +45,7 @@ from .api_filters import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-SCRAPER_CMD_BASE = ["python", "-m", "scraper.main"]
+SCRAPER_CMD_BASE = ["python", "-m", "backend.main"]
 SCRAPER_CWD = "/app"
 
 _db_instance = None

@@ -7,8 +7,8 @@ from typing import Any, Dict, List, Optional
 
 from bs4 import BeautifulSoup
 
-from .models import Job
-from .utils import slugify_url
+from ..models import Job
+from ..utils import slugify_url
 
 SITE_BASE = "https://www.buscojobs.com.uy"
 

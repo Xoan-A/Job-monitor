@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from scraper.parser import parse_api, _build_url
+from backend.scraper.parser import parse_api, _build_url
 
 
 def test_parse_api_valid_jobs():

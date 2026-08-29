@@ -20,7 +20,7 @@ export function SettingsDialog() {
           <fieldset className="settings-group">
             <legend>Data source</legend>
             <p className="settings-hint">
-              Connect to the scraper API (PostgreSQL-backed) or browse with demo data.
+              Connect to the backend API or browse with demo data.
               Current status: {sourceKind === 'api' ? 'connected to API' : sourceKind === 'mock' ? 'demo data' : 'connecting...'}
             </p>
             <div className="settings-options">

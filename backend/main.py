@@ -6,11 +6,11 @@ import logging
 import sys
 from typing import List, Optional
 
-from .base import ScraperRegistry
-from .buscojobs_scraper import BuscojobsScraper
+from .scraper.base_scraper import ScraperRegistry
+from .scraper.buscojobs_scraper import BuscojobsScraper
 from .config import get_database_config, get_scraper_configs, load_config
 from .database import Database
-from .jooble_scraper import JoobleScraper
+from .scraper.jooble_scraper import JoobleScraper
 from .models import ScrapeResult
 
 logging.basicConfig(

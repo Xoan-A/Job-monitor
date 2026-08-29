@@ -23,10 +23,10 @@ services:
       postgres:
         condition: service_healthy
 
-  scraper-api:
+  backend-api:
     build:
       context: .
-      dockerfile: scraper/Dockerfile
+      dockerfile: backend/Dockerfile
     restart: unless-stopped
     environment:
       - POSTGRES_HOST=postgres
@@ -40,8 +40,6 @@ services:
         condition: service_healthy
     ports:
       - "8000:8000"
-    volumes:
-      - ./scraper:/app/scraper:ro
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
@@ -55,7 +53,7 @@ services:
       dockerfile: frontend/Dockerfile
     restart: unless-stopped
     depends_on:
-      scraper-api:
+      backend-api:
         condition: service_healthy
     ports:
       - "${FRONTEND_PORT:-5173}:80"
@@ -66,10 +64,10 @@ services:
       retries: 3
       start_period: 10s
 
-  scraper-cli:
+  backend-cli:
     build:
       context: .
-      dockerfile: scraper/Dockerfile
+      dockerfile: backend/Dockerfile
     restart: "no"
     environment:
       - POSTGRES_HOST=postgres
@@ -81,9 +79,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    entrypoint: ["python", "-m", "scraper.main"]
+    entrypoint: ["python", "-m", "backend.main"]
     volumes:
-      - ./scraper:/app/scraper:ro
+      - ./backend:/app/backend
 
   postgres:
     image: postgres:16-alpine

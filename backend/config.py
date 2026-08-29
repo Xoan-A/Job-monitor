@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 
 import yaml
 
-from .base import ScraperConfig
+from .scraper.base_scraper import ScraperConfig
 
 
 def _substitute_env(value: Any) -> Any:

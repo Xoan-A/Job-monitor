@@ -56,7 +56,7 @@ export function OverviewPage() {
       <section className="overview__intro">
         <h2>Workspace overview</h2>
         <p>
-          Jobs are collected automatically by the scrapers. Review them here: filter what matters,
+          Jobs are collected automatically. Review them here: filter what matters,
           shortlist interesting roles and track your applications.
           {sourceKind === 'mock' && ' Currently showing demo data because the API is not reachable.'}
         </p>

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from scraper.database import JobRecord
-from scraper.models import Job
+from backend.database import JobRecord
+from backend.models import Job
 
 
 def test_upsert_creates_new_jobs(db, sample_jobs):

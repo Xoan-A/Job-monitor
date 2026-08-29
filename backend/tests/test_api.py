@@ -4,9 +4,9 @@ import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 
-from scraper.api import app
-from scraper.database import JobRecord
-from scraper.models import Job
+from backend.api.api import app
+from backend.database import JobRecord
+from backend.models import Job
 
 
 @pytest.fixture()

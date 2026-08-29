@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
-from .base import BaseScraper, ScraperConfig, ScraperRegistry
-from .models import Job
+from .base_scraper import BaseScraper, ScraperConfig, ScraperRegistry
+from ..models import Job
 
 logger = logging.getLogger(__name__)
 

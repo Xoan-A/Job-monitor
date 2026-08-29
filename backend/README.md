@@ -1,4 +1,4 @@
-# Scraper Module
+# Backend Module
 
 Python scrapers + FastAPI REST API for collecting and serving job listings.
 
@@ -6,15 +6,15 @@ Python scrapers + FastAPI REST API for collecting and serving job listings.
 
 ```bash
 # Run a scrape via CLI
-python -m scraper.main scrape buscojobs --pages 3
-python -m scraper.main scrape jooble --pages 2 --term "desarrollo"
-python -m scraper.main scrape getonbrd --pages 1 --term ".NET"
+python -m backend.main scrape buscojobs --pages 3
+python -m backend.main scrape jooble --pages 2 --term "desarrollo"
+python -m backend.main scrape getonbrd --pages 1 --term ".NET"
 
 # List available scrapers
-python -m scraper.main list
+python -m backend.main list
 
 # Show DB stats
-python -m scraper.main stats
+python -m backend.main stats
 ```
 
 ## Architecture

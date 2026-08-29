@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from scraper.models import Job, ScrapeResult
+from backend.models import Job, ScrapeResult
 
 
 def test_job_to_dict():

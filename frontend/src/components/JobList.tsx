@@ -78,7 +78,7 @@ export function JobList() {
           <EmptyState
             icon={<IconInbox size={28} />}
             title="No jobs collected yet"
-            text="Jobs found by the scraper will appear in this list."
+            text="Jobs found by the backend will appear in this list."
             action={{ label: 'Refresh', onClick: refreshJobs }}
           />
         )}

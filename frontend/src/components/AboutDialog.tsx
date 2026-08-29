@@ -26,7 +26,7 @@ export function AboutDialog() {
             <li><strong>Stack:</strong> Python / FastAPI + PostgreSQL + React / TypeScript + n8n</li>
             <li><strong>Features:</strong> Keyword match scoring, status tracking, notes, bulk actions</li>
           </ul>
-          <p className="about-note">Match scores are simple keyword comparisons configured in the scraper profile — not AI predictions.</p>
+          <p className="about-note">Match scores are simple keyword comparisons configured in the backend profile — not AI predictions.</p>
         </div>
         <div className="modal__footer">
           <button type="button" className="btn btn--secondary btn--sm" onClick={close}>

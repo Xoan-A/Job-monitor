@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from scraper.api_filters import _build_filters, _order_clause, _compute_match
-from scraper.database import JobRecord
+from backend.api.api_filters import _build_filters, _order_clause, _compute_match
+from backend.database import JobRecord
 
 
 def test_build_filters_source():

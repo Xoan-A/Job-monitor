@@ -10,7 +10,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from scraper.database import Base, JobRecord, Database
+from backend.database import Base, JobRecord, Database
 
 
 @pytest.fixture(scope="session")
@@ -66,7 +66,7 @@ def sample_job_data():
 
 @pytest.fixture()
 def sample_jobs():
-    from scraper.models import Job
+    from backend.models import Job
 
     return [
         Job(

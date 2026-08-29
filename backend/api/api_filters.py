@@ -5,8 +5,8 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy import BigInteger, and_, cast, func, or_, select, String
 
-from scraper.config import load_config
-from scraper.database import JobRecord
+from backend.config import load_config
+from backend.database import JobRecord
 
 from .api_models import JobResponse
 
