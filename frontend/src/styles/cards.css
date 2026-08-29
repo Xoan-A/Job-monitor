@@ -226,22 +226,56 @@
 }
 
 .match-popover {
-  padding: 8px 10px;
-  min-width: 200px;
+  padding: 10px 12px;
+  min-width: 240px;
+  max-width: 320px;
 }
 .match-popover__score {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
 }
 .match-popover__label {
   font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
+  margin-bottom: 8px;
 }
-.match-popover__note {
-  margin-top: 6px;
+.match-popover__explanation {
+  font-size: 12px;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.match-popover__section {
   font-size: 11.5px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+.match-popover__section strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.match-popover__gaps {
+  color: var(--warning);
+}
+.match-popover__components {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.match-popover__component {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
   color: var(--text-tertiary);
+  padding: 2px 0;
+}
+.match-popover__component span:last-child {
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .job-list__more {

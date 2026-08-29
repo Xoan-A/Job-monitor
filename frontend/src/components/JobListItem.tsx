@@ -44,7 +44,7 @@ export const JobListItem = memo(function JobListItem({ job, selected, checked, o
         <div className="job-row__top">
           {job.status === 'new' && !selected && <span className="unread-dot" aria-label="New" />}
           <h3 className="job-row__title">{job.title}</h3>
-          {job.matchScore !== null && <MatchChip score={job.matchScore} />}
+          {job.matchScore !== null && <MatchChip score={job.matchScore} job={job} />}
         </div>
 
         <div className="job-row__company">
@@ -113,7 +113,7 @@ function firstSentence(job: Job): string {
   return plain.length > 140 ? `${plain.slice(0, 137)}...` : plain
 }
 
-export function MatchChip({ score }: { score: number }) {
+export function MatchChip({ score, job }: { score: number; job?: Job }) {
   const label = matchLabel(score)
   return (
     <Dropdown
@@ -136,8 +136,56 @@ export function MatchChip({ score }: { score: number }) {
         <div className="match-popover">
           <div className="match-popover__score">{score}%</div>
           <div className="match-popover__label">{label}</div>
-          <div className="match-popover__note">
-            Keyword overlap between this listing and your configured profile skills.
+          {job?.matchExplanation && (
+            <div className="match-popover__explanation">{job.matchExplanation}</div>
+          )}
+          {job?.matchStrong && job.matchStrong.length > 0 && (
+            <div className="match-popover__section">
+              <strong>Matched:</strong> {job.matchStrong.slice(0, 5).join(', ')}
+              {job.matchStrong.length > 5 && ` +${job.matchStrong.length - 5}`}
+            </div>
+          )}
+          {job?.matchRelated && job.matchRelated.length > 0 && (
+            <div className="match-popover__section">
+              <strong>Related:</strong> {job.matchRelated.map(r => `${r.source}→${r.target}`).join(', ')}
+            </div>
+          )}
+          {job?.matchGaps && job.matchGaps.length > 0 && (
+            <div className="match-popover__section match-popover__gaps">
+              <strong>Gaps:</strong> {job.matchGaps.join(', ')}
+            </div>
+          )}
+          <div className="match-popover__components">
+            {job?.matchRequiredScore !== null && job?.matchRequiredScore !== undefined && (
+              <div className="match-popover__component">
+                <span>Required Skills</span>
+                <span>{job.matchRequiredScore}%</span>
+              </div>
+            )}
+            {job?.matchPreferredScore !== null && job?.matchPreferredScore !== undefined && (
+              <div className="match-popover__component">
+                <span>Preferred Skills</span>
+                <span>{job.matchPreferredScore}%</span>
+              </div>
+            )}
+            {job?.matchSemanticScore !== null && job?.matchSemanticScore !== undefined && (
+              <div className="match-popover__component">
+                <span>Semantic</span>
+                <span>{job.matchSemanticScore}%</span>
+              </div>
+            )}
+            {job?.matchExperienceScore !== null && job?.matchExperienceScore !== undefined && (
+              <div className="match-popover__component">
+                <span>Experience</span>
+                <span>{job.matchExperienceScore}%</span>
+              </div>
+            )}
+            {job?.matchRoleScore !== null && job?.matchRoleScore !== undefined && (
+              <div className="match-popover__component">
+                <span>Role Fit</span>
+                <span>{job.matchRoleScore}%</span>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -88,6 +88,13 @@ class JobResponse(BaseModel):
     match_score: Optional[int] = None
     match_strong: List[str] = []
     match_gaps: List[str] = []
+    match_related: List[dict] = []
+    match_explanation: Optional[str] = None
+    match_required_score: Optional[int] = None
+    match_preferred_score: Optional[int] = None
+    match_semantic_score: Optional[int] = None
+    match_experience_score: Optional[int] = None
+    match_role_score: Optional[int] = None
 
 
 class JobsListResponse(BaseModel):

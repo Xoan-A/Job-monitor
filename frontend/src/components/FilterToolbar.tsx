@@ -11,6 +11,7 @@ const SORT_LABELS: Record<SortOption, string> = {
   relevance: 'Relevance',
   company: 'Company',
   salary: 'Salary',
+  match: 'Best Match',
 }
 
 const POSTED_OPTIONS: { value: PostedWithinOption; label: string }[] = [

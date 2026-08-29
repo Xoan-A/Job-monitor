@@ -50,3 +50,7 @@ def get_database_config(config: Dict[str, Any]) -> Dict[str, Any]:
 
 def get_scheduler_config(config: Dict[str, Any]) -> Dict[str, Any]:
     return config.get("scheduler", {})
+
+
+def get_matching_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    return config.get("matching", {})

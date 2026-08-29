@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from contextlib import contextmanager
+from dataclasses import asdict
 from datetime import datetime
 from typing import Any, Dict, Generator, List, Optional
 
@@ -10,8 +11,10 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
+    Float,
     Index,
     Integer,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -23,7 +26,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-from .models import Job, ScrapeResult
+from .models import Job, ScrapeResult, CandidateProfile, Language, JobNormalized, JobMatch, MatchRelated
 
 
 class Base(DeclarativeBase):
@@ -143,6 +146,109 @@ class ScrapeRunRecord(Base):
     error = Column(Text)
 
 
+class CandidateProfileRecord(Base):
+    __tablename__ = "candidate_profiles"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    version = Column(Integer, default=1, nullable=False)
+    raw_text = Column(Text)
+    skills = Column(JSON, default=list)
+    roles = Column(JSON, default=list)
+    experience_level = Column(String(50))
+    years_experience = Column(Integer)
+    education = Column(JSON, default=list)
+    languages = Column(JSON, default=list)
+    embedding = Column(LargeBinary)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
+
+    def to_profile(self) -> CandidateProfile:
+        return CandidateProfile(
+            id=self.id,
+            version=self.version,
+            raw_text=self.raw_text or "",
+            skills=self.skills or [],
+            roles=self.roles or [],
+            experience_level=self.experience_level,
+            years_experience=self.years_experience,
+            education=self.education or [],
+            languages=[Language(**l) if isinstance(l, dict) else l for l in (self.languages or [])],
+            created_at=self.created_at.isoformat() if self.created_at else None,
+            updated_at=self.updated_at.isoformat() if self.updated_at else None,
+        )
+
+
+class JobNormalizedRecord(Base):
+    __tablename__ = "job_normalized"
+    __table_args__ = (
+        Index("ix_job_normalized_job_id", "job_id"),
+    )
+
+    job_id = Column(Integer, primary_key=True)
+    required_skills = Column(JSON, default=list)
+    preferred_skills = Column(JSON, default=list)
+    all_skills = Column(JSON, default=list)
+    role_keywords = Column(JSON, default=list)
+    seniority = Column(String(50))
+    embedding = Column(LargeBinary)
+    analyzed_at = Column(DateTime, default=func.now(), nullable=False)
+
+    def to_normalized(self) -> JobNormalized:
+        return JobNormalized(
+            job_id=self.job_id,
+            required_skills=self.required_skills or [],
+            preferred_skills=self.preferred_skills or [],
+            all_skills=self.all_skills or [],
+            role_keywords=self.role_keywords or [],
+            seniority=self.seniority,
+            analyzed_at=self.analyzed_at.isoformat() if self.analyzed_at else None,
+        )
+
+
+class JobMatchRecord(Base):
+    __tablename__ = "job_matches"
+    __table_args__ = (
+        UniqueConstraint("job_id", "profile_id", name="uq_job_profile"),
+        Index("ix_job_matches_job_id", "job_id"),
+        Index("ix_job_matches_profile_id", "profile_id"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    job_id = Column(Integer, nullable=False)
+    profile_id = Column(Integer, nullable=False)
+    profile_version = Column(Integer, nullable=False, default=1)
+    final_score = Column(Float)
+    required_score = Column(Float)
+    preferred_score = Column(Float)
+    semantic_score = Column(Float)
+    experience_score = Column(Float)
+    role_score = Column(Float)
+    exact_matches = Column(JSON, default=list)
+    related_matches = Column(JSON, default=list)
+    gaps = Column(JSON, default=list)
+    explanation = Column(Text)
+    analyzed_at = Column(DateTime, default=func.now(), nullable=False)
+
+    def to_match(self) -> JobMatch:
+        return JobMatch(
+            id=self.id,
+            job_id=self.job_id,
+            profile_id=self.profile_id,
+            profile_version=self.profile_version,
+            final_score=self.final_score,
+            required_score=self.required_score,
+            preferred_score=self.preferred_score,
+            semantic_score=self.semantic_score,
+            experience_score=self.experience_score,
+            role_score=self.role_score,
+            exact_matches=self.exact_matches or [],
+            related_matches=[MatchRelated(**r) if isinstance(r, dict) else r for r in (self.related_matches or [])],
+            gaps=self.gaps or [],
+            explanation=self.explanation,
+            analyzed_at=self.analyzed_at.isoformat() if self.analyzed_at else None,
+        )
+
+
 class Database:
     def __init__(self, config: Dict[str, Any]):
         host = config.get("host", os.environ.get("POSTGRES_HOST", "localhost"))
@@ -167,13 +273,62 @@ class Database:
         self.ensure_user_columns()
 
     def ensure_user_columns(self):
-        """Lightweight migration: add user workflow columns if the table predates them."""
+        """Lightweight migration: add user workflow and matching tables/columns."""
         statements = [
+            # User workflow columns
             "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS user_status VARCHAR(20) NOT NULL DEFAULT 'new'",
             "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS is_saved BOOLEAN NOT NULL DEFAULT FALSE",
             "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS notes TEXT",
             "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP",
             "CREATE INDEX IF NOT EXISTS ix_jobs_user_status ON jobs (user_status)",
+            # Candidate profiles table
+            """CREATE TABLE IF NOT EXISTS candidate_profiles (
+                id SERIAL PRIMARY KEY,
+                version INTEGER NOT NULL DEFAULT 1,
+                raw_text TEXT,
+                skills JSONB DEFAULT '[]',
+                roles JSONB DEFAULT '[]',
+                experience_level VARCHAR(50),
+                years_experience INTEGER,
+                education JSONB DEFAULT '[]',
+                languages JSONB DEFAULT '[]',
+                embedding BYTEA,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            )""",
+            # Job normalized table
+            """CREATE TABLE IF NOT EXISTS job_normalized (
+                job_id INTEGER PRIMARY KEY REFERENCES jobs(id) ON DELETE CASCADE,
+                required_skills JSONB DEFAULT '[]',
+                preferred_skills JSONB DEFAULT '[]',
+                all_skills JSONB DEFAULT '[]',
+                role_keywords JSONB DEFAULT '[]',
+                seniority VARCHAR(50),
+                embedding BYTEA,
+                analyzed_at TIMESTAMP NOT NULL DEFAULT NOW()
+            )""",
+            "CREATE INDEX IF NOT EXISTS ix_job_normalized_job_id ON job_normalized (job_id)",
+            # Job matches table
+            """CREATE TABLE IF NOT EXISTS job_matches (
+                id SERIAL PRIMARY KEY,
+                job_id INTEGER NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+                profile_id INTEGER NOT NULL REFERENCES candidate_profiles(id) ON DELETE CASCADE,
+                profile_version INTEGER NOT NULL DEFAULT 1,
+                final_score FLOAT,
+                required_score FLOAT,
+                preferred_score FLOAT,
+                semantic_score FLOAT,
+                experience_score FLOAT,
+                role_score FLOAT,
+                exact_matches JSONB DEFAULT '[]',
+                related_matches JSONB DEFAULT '[]',
+                gaps JSONB DEFAULT '[]',
+                explanation TEXT,
+                analyzed_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                UNIQUE(job_id, profile_id)
+            )""",
+            "CREATE INDEX IF NOT EXISTS ix_job_matches_job_id ON job_matches (job_id)",
+            "CREATE INDEX IF NOT EXISTS ix_job_matches_profile_id ON job_matches (profile_id)",
         ]
         with self.engine.begin() as conn:
             for stmt in statements:
@@ -318,3 +473,163 @@ class Database:
                 run.completed_at = func.now()
                 run.status = "error" if error else "completed"
                 run.error = error
+
+    def upsert_candidate_profile(self, profile: CandidateProfile, embedding: Optional[bytes] = None) -> int:
+        with self.session() as session:
+            existing = session.scalars(
+                select(CandidateProfileRecord).order_by(CandidateProfileRecord.id.desc()).limit(1)
+            ).first()
+            if existing:
+                existing.version += 1
+                existing.raw_text = profile.raw_text
+                existing.skills = profile.skills
+                existing.roles = profile.roles
+                existing.experience_level = profile.experience_level
+                existing.years_experience = profile.years_experience
+                existing.education = profile.education
+                existing.languages = [asdict(l) if hasattr(l, '__dataclass_fields__') else l for l in profile.languages]
+                if embedding is not None:
+                    existing.embedding = embedding
+                existing.updated_at = func.now()
+                session.commit()
+                return existing.id
+            else:
+                record = CandidateProfileRecord(
+                    version=1,
+                    raw_text=profile.raw_text,
+                    skills=profile.skills,
+                    roles=profile.roles,
+                    experience_level=profile.experience_level,
+                    years_experience=profile.years_experience,
+                    education=profile.education,
+                    languages=[asdict(l) if hasattr(l, '__dataclass_fields__') else l for l in profile.languages],
+                    embedding=embedding,
+                )
+                session.add(record)
+                session.flush()
+                return record.id
+
+    def get_latest_profile(self) -> Optional[CandidateProfile]:
+        with self.session() as session:
+            record = session.scalars(
+                select(CandidateProfileRecord).order_by(CandidateProfileRecord.id.desc()).limit(1)
+            ).first()
+            if not record:
+                return None
+            return record.to_profile()
+
+    def get_latest_profile_record(self) -> Optional[CandidateProfileRecord]:
+        with self.session() as session:
+            return session.scalars(
+                select(CandidateProfileRecord).order_by(CandidateProfileRecord.id.desc()).limit(1)
+            ).first()
+
+    def get_profile_embedding(self, profile_id: int) -> Optional[bytes]:
+        with self.session() as session:
+            record = session.get(CandidateProfileRecord, profile_id)
+            return record.embedding if record else None
+
+    def upsert_job_normalized(self, normalized: JobNormalized, embedding: Optional[bytes] = None):
+        with self.session() as session:
+            existing = session.get(JobNormalizedRecord, normalized.job_id)
+            if existing:
+                existing.required_skills = normalized.required_skills
+                existing.preferred_skills = normalized.preferred_skills
+                existing.all_skills = normalized.all_skills
+                existing.role_keywords = normalized.role_keywords
+                existing.seniority = normalized.seniority
+                if embedding is not None:
+                    existing.embedding = embedding
+                existing.analyzed_at = func.now()
+            else:
+                record = JobNormalizedRecord(
+                    job_id=normalized.job_id,
+                    required_skills=normalized.required_skills,
+                    preferred_skills=normalized.preferred_skills,
+                    all_skills=normalized.all_skills,
+                    role_keywords=normalized.role_keywords,
+                    seniority=normalized.seniority,
+                    embedding=embedding,
+                )
+                session.add(record)
+
+    def get_all_job_normalized(self) -> List[JobNormalized]:
+        with self.session() as session:
+            records = session.scalars(select(JobNormalizedRecord)).all()
+            return [r.to_normalized() for r in records]
+
+    def get_job_normalized(self, job_id: int) -> Optional[JobNormalized]:
+        with self.session() as session:
+            record = session.get(JobNormalizedRecord, job_id)
+            return record.to_normalized() if record else None
+
+    def get_job_embedding(self, job_id: int) -> Optional[bytes]:
+        with self.session() as session:
+            record = session.get(JobNormalizedRecord, job_id)
+            return record.embedding if record else None
+
+    def upsert_job_match(self, match: JobMatch):
+        with self.session() as session:
+            existing = session.scalars(
+                select(JobMatchRecord).where(
+                    JobMatchRecord.job_id == match.job_id,
+                    JobMatchRecord.profile_id == match.profile_id,
+                )
+            ).first()
+            if existing:
+                existing.profile_version = match.profile_version
+                existing.final_score = match.final_score
+                existing.required_score = match.required_score
+                existing.preferred_score = match.preferred_score
+                existing.semantic_score = match.semantic_score
+                existing.experience_score = match.experience_score
+                existing.role_score = match.role_score
+                existing.exact_matches = match.exact_matches
+                existing.related_matches = [asdict(r) if hasattr(r, '__dataclass_fields__') else r for r in match.related_matches]
+                existing.gaps = match.gaps
+                existing.explanation = match.explanation
+                existing.analyzed_at = func.now()
+            else:
+                record = JobMatchRecord(
+                    job_id=match.job_id,
+                    profile_id=match.profile_id,
+                    profile_version=match.profile_version,
+                    final_score=match.final_score,
+                    required_score=match.required_score,
+                    preferred_score=match.preferred_score,
+                    semantic_score=match.semantic_score,
+                    experience_score=match.experience_score,
+                    role_score=match.role_score,
+                    exact_matches=match.exact_matches,
+                    related_matches=[asdict(r) if hasattr(r, '__dataclass_fields__') else r for r in match.related_matches],
+                    gaps=match.gaps,
+                    explanation=match.explanation,
+                )
+                session.add(record)
+
+    def get_job_match(self, job_id: int, profile_id: int) -> Optional[JobMatch]:
+        with self.session() as session:
+            record = session.scalars(
+                select(JobMatchRecord).where(
+                    JobMatchRecord.job_id == job_id,
+                    JobMatchRecord.profile_id == profile_id,
+                )
+            ).first()
+            return record.to_match() if record else None
+
+    def get_all_job_matches(self, profile_id: int) -> Dict[int, JobMatch]:
+        with self.session() as session:
+            records = session.scalars(
+                select(JobMatchRecord).where(JobMatchRecord.profile_id == profile_id)
+            ).all()
+            return {r.job_id: r.to_match() for r in records}
+
+    def invalidate_matches_for_profile(self, profile_id: int):
+        with self.session() as session:
+            session.query(JobMatchRecord).filter(
+                JobMatchRecord.profile_id == profile_id
+            ).delete()
+
+    def get_all_job_ids(self) -> List[int]:
+        with self.session() as session:
+            return [r for r in session.scalars(select(JobRecord.id)).all()]

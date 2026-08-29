@@ -45,20 +45,10 @@ scheduler:
     - "software"
   default_pages: 5
 
-# Optional candidate profile. Skills listed here power the transparent,
-# keyword-based match score ("Why this matches" in the web UI).
-# Remove or leave empty to disable match scoring entirely.
-profile:
-  skills:
-    - "C#"
-    - ".NET"
-    - "ASP.NET"
-    - "SQL Server"
-    - "PostgreSQL"
-    - "Docker"
-    - "Git"
-    - "REST"
-    - "Python"
-    - "JavaScript"
-    - "TypeScript"
-    - "React"
+matching:
+  weights:
+    required_skills: 0.40
+    preferred_skills: 0.15
+    semantic: 0.20
+    experience: 0.15
+    role: 0.10

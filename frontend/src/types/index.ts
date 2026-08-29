@@ -52,9 +52,16 @@ export interface Job {
   matchScore: number | null
   matchStrong: string[]
   matchGaps: string[]
+  matchRelated: { source: string; target: string; confidence: number }[]
+  matchExplanation: string | null
+  matchRequiredScore: number | null
+  matchPreferredScore: number | null
+  matchSemanticScore: number | null
+  matchExperienceScore: number | null
+  matchRoleScore: number | null
 }
 
-export type SortOption = 'newest' | 'oldest' | 'company' | 'relevance' | 'salary'
+export type SortOption = 'newest' | 'oldest' | 'company' | 'relevance' | 'salary' | 'match'
 export type PostedWithinOption = '' | '1' | '2' | '3' | '7' | '14' | '30' | '90'
 
 export interface JobFilters {

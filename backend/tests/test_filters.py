@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from backend.api.api_filters import _build_filters, _order_clause, _compute_match
+from backend.api.api_filters import _build_filters, _order_clause
 from backend.database import JobRecord
 
 

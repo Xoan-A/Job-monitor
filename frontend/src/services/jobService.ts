@@ -86,6 +86,13 @@ interface ApiJob {
   match_score: number | null
   match_strong: string[]
   match_gaps: string[]
+  match_related: { source: string; target: string; confidence: number }[]
+  match_explanation: string | null
+  match_required_score: number | null
+  match_preferred_score: number | null
+  match_semantic_score: number | null
+  match_experience_score: number | null
+  match_role_score: number | null
 }
 
 interface ApiJobsPageResponse {
@@ -147,6 +154,13 @@ function mapApiJob(raw: ApiJob): Job {
     matchScore: typeof raw.match_score === 'number' ? raw.match_score : null,
     matchStrong: Array.isArray(raw.match_strong) ? raw.match_strong : [],
     matchGaps: Array.isArray(raw.match_gaps) ? raw.match_gaps : [],
+    matchRelated: Array.isArray(raw.match_related) ? raw.match_related : [],
+    matchExplanation: raw.match_explanation ?? null,
+    matchRequiredScore: typeof raw.match_required_score === 'number' ? raw.match_required_score : null,
+    matchPreferredScore: typeof raw.match_preferred_score === 'number' ? raw.match_preferred_score : null,
+    matchSemanticScore: typeof raw.match_semantic_score === 'number' ? raw.match_semantic_score : null,
+    matchExperienceScore: typeof raw.match_experience_score === 'number' ? raw.match_experience_score : null,
+    matchRoleScore: typeof raw.match_role_score === 'number' ? raw.match_role_score : null,
   }
 }
 

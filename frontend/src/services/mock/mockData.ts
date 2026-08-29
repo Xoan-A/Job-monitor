@@ -358,6 +358,13 @@ export function buildMockJobs(): Job[] {
       matchScore: total ? Math.round((100 * matched.length) / total) : null,
       matchStrong: matched,
       matchGaps: gaps.slice(0, 6),
+      matchRelated: [],
+      matchExplanation: total ? `Keyword overlap: ${matched.length} of ${total} profile skills found.` : null,
+      matchRequiredScore: total ? Math.round((100 * matched.length) / total) : null,
+      matchPreferredScore: null,
+      matchSemanticScore: null,
+      matchExperienceScore: null,
+      matchRoleScore: null,
     }
   })
 }

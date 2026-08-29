@@ -71,8 +71,10 @@ export function decodeEntities(text: string): string {
 
 export function matchLabel(score: number | null): string | null {
   if (score === null) return null
-  if (score >= 75) return 'Strong match'
-  if (score >= 50) return 'Good match'
+  if (score >= 85) return 'Excellent match'
+  if (score >= 70) return 'Strong match'
+  if (score >= 50) return 'Moderate match'
+  if (score >= 30) return 'Weak match'
   return 'Low match'
 }
 

@@ -10,14 +10,14 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 from sqlalchemy import and_, delete, func, select
 
 from backend.config import load_config, get_database_config
-from backend.database import Database, JobRecord
+from backend.database import Database, JobRecord, CandidateProfileRecord, JobNormalizedRecord, JobMatchRecord
 from backend.scraper.base_scraper import ScraperRegistry
 
 from .api_models import (
@@ -41,6 +41,10 @@ from .api_filters import (
     _order_clause,
     _to_response,
 )
+from backend.matching import compute_match, normalize_job, generate_job_embedding, generate_profile_embedding
+from backend.matching.resume_parser import parse_resume
+from backend.models import CandidateProfile, JobNormalized, JobMatch
+from backend.config import get_matching_config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -219,7 +223,7 @@ async def list_jobs(
     posted_within: Optional[int] = Query(None, ge=0, le=365, description="Days back (publication date)"),
     discovered_within: Optional[int] = Query(None, ge=0, le=365, description="Days back (first discovered)"),
     has_salary: Optional[bool] = Query(None),
-    sort: str = Query("newest", description="newest | oldest | company | relevance | salary"),
+    sort: str = Query("newest", description="newest | oldest | company | relevance | salary | match"),
 ):
     db = get_db()
     args = dict(
@@ -240,7 +244,14 @@ async def list_jobs(
         has_salary=has_salary,
     )
     filters = _build_filters(args)
-    order = _order_clause(sort, q)
+
+    has_profile = False
+    with db.session() as session:
+        has_profile = session.query(
+            session.query(CandidateProfileRecord).first() is not None
+        )
+
+    order = _order_clause(sort, q, has_profile)
 
     with db.session() as session:
         count_stmt = select(func.count(JobRecord.id))
@@ -253,6 +264,14 @@ async def list_jobs(
         offset = (page - 1) * limit
 
         stmt = select(JobRecord)
+        if sort == "match" and has_profile:
+            stmt = stmt.outerjoin(
+                JobMatchRecord,
+                and_(
+                    JobRecord.id == JobMatchRecord.job_id,
+                    JobMatchRecord.profile_id == session.query(CandidateProfileRecord.id).first()
+                )
+            )
         for f in filters:
             stmt = stmt.where(f)
         for o in order:
@@ -260,7 +279,21 @@ async def list_jobs(
         stmt = stmt.limit(limit).offset(offset)
 
         records = session.scalars(stmt).all()
-        jobs = [_to_response(r) for r in records]
+
+        match_map = {}
+        if sort == "match" and has_profile:
+            job_ids = [r.id for r in records]
+            if job_ids:
+                profile_id = session.query(CandidateProfileRecord.id).first()
+                matches = session.scalars(
+                    select(JobMatchRecord).where(
+                        JobMatchRecord.job_id.in_(job_ids),
+                        JobMatchRecord.profile_id == profile_id
+                    )
+                ).all()
+                match_map = {m.job_id: m for m in matches}
+
+        jobs = [_to_response(r, match_map.get(r.id)) for r in records]
 
         return JobsListResponse(
             jobs=jobs,
@@ -333,7 +366,16 @@ async def get_job(job_id: int):
     db = get_db()
     with db.session() as session:
         record = _get_record_or_404(session, job_id)
-        return _to_response(record)
+
+        match = None
+        profile = session.query(CandidateProfileRecord).first()
+        if profile:
+            match = session.query(JobMatchRecord).filter(
+                JobMatchRecord.job_id == job_id,
+                JobMatchRecord.profile_id == profile.id
+            ).first()
+
+        return _to_response(record, match)
 
 
 @app.patch("/jobs/{job_id}", response_model=JobResponse)
@@ -418,3 +460,222 @@ async def cleanup_old_jobs(
             stmt = stmt.where(JobRecord.source == source)
         result = session.execute(stmt)
         return {"deleted": result.rowcount, "older_than_days": days, "source": source}
+
+
+@app.post("/profile/upload")
+async def upload_profile(file: UploadFile = File(...)):
+    if not file.filename.endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+    contents = await file.read()
+    if not contents:
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    profile = parse_resume(contents)
+    profile_embedding = generate_profile_embedding(profile)
+
+    db = get_db()
+    with db.session() as session:
+        existing = session.query(CandidateProfileRecord).first()
+        if existing:
+            existing.raw_text = profile.raw_text
+            existing.skills = profile.skills
+            existing.roles = profile.roles
+            existing.experience_level = profile.experience_level
+            existing.years_experience = profile.years_experience
+            existing.education = profile.education
+            existing.languages = [lang.__dict__ for lang in profile.languages] if profile.languages else []
+            existing.version = existing.version + 1
+            existing.updated_at = datetime.now(timezone.utc)
+            profile_id = existing.id
+            profile_version = existing.version
+            if profile_embedding:
+                existing.profile_embedding = profile_embedding
+        else:
+            new_profile = CandidateProfileRecord(
+                raw_text=profile.raw_text,
+                skills=profile.skills,
+                roles=profile.roles,
+                experience_level=profile.experience_level,
+                years_experience=profile.years_experience,
+                education=profile.education,
+                languages=[lang.__dict__ for lang in profile.languages] if profile.languages else [],
+                profile_embedding=profile_embedding,
+                version=1,
+            )
+            session.add(new_profile)
+            session.flush()
+            profile_id = new_profile.id
+            profile_version = 1
+        session.commit()
+
+    return {
+        "status": "uploaded",
+        "profile_id": profile_id,
+        "version": profile_version,
+        "skills": profile.skills,
+        "roles": profile.roles,
+        "experience_level": profile.experience_level,
+        "years_experience": profile.years_experience,
+    }
+
+
+@app.get("/profile")
+async def get_profile():
+    db = get_db()
+    with db.session() as session:
+        profile = session.query(CandidateProfileRecord).first()
+        if not profile:
+            raise HTTPException(status_code=404, detail="No profile uploaded")
+        return {
+            "id": profile.id,
+            "version": profile.version,
+            "skills": profile.skills,
+            "roles": profile.roles,
+            "experience_level": profile.experience_level,
+            "years_experience": profile.years_experience,
+            "education": profile.education,
+            "languages": profile.languages,
+            "updated_at": _iso(profile.updated_at),
+        }
+
+
+@app.post("/profile/delete")
+async def delete_profile():
+    db = get_db()
+    with db.session() as session:
+        profile = session.query(CandidateProfileRecord).first()
+        if profile:
+            session.delete(profile)
+            session.commit()
+    return {"status": "deleted"}
+
+
+@app.post("/match/batch")
+async def batch_match(background: BackgroundTasks):
+    db = get_db()
+    with db.session() as session:
+        profile = session.query(CandidateProfileRecord).first()
+        if not profile:
+            raise HTTPException(status_code=400, detail="No profile uploaded")
+        profile_id = profile.id
+
+    background.add_task(_run_batch_match, profile_id)
+    return {"status": "started", "profile_id": profile_id}
+
+
+@app.get("/match/progress")
+async def match_progress():
+    return {"status": "idle", "processed": 0, "total": 0}
+
+
+def _run_batch_match(profile_id: int):
+    try:
+        db = get_db()
+        with db.session() as session:
+            profile_record = session.get(CandidateProfileRecord, profile_id)
+            if not profile_record:
+                logger.error("Profile %d not found", profile_id)
+                return
+
+            profile = CandidateProfile(
+                raw_text=profile_record.raw_text or "",
+                skills=profile_record.skills or [],
+                roles=profile_record.roles or [],
+                experience_level=profile_record.experience_level,
+                years_experience=profile_record.years_experience,
+                education=profile_record.education or [],
+                languages=profile_record.languages or [],
+                version=profile_record.version,
+            )
+            profile_embedding = profile_record.profile_embedding
+
+            job_records = session.scalars(select(JobRecord)).all()
+            total = len(job_records)
+            processed = 0
+            errors = 0
+
+            for job_record in job_records:
+                try:
+                    normalized = normalize_job(
+                        job_id=job_record.id,
+                        title=job_record.title or "",
+                        tags=job_record.tags if isinstance(job_record.tags, list) else [],
+                        description=job_record.description,
+                    )
+
+                    existing_norm = session.query(JobNormalizedRecord).filter(
+                        JobNormalizedRecord.job_id == job_record.id
+                    ).first()
+                    if existing_norm:
+                        existing_norm.required_skills = normalized.required_skills
+                        existing_norm.preferred_skills = normalized.preferred_skills
+                        existing_norm.all_skills = normalized.all_skills
+                        existing_norm.role_keywords = normalized.role_keywords
+                        existing_norm.seniority = normalized.seniority
+                        existing_norm.normalized_at = datetime.now(timezone.utc)
+                    else:
+                        new_norm = JobNormalizedRecord(
+                            job_id=normalized.job_id,
+                            required_skills=normalized.required_skills,
+                            preferred_skills=normalized.preferred_skills,
+                            all_skills=normalized.all_skills,
+                            role_keywords=normalized.role_keywords,
+                            seniority=normalized.seniority,
+                        )
+                        session.add(new_norm)
+
+                    job_embedding = generate_job_embedding(
+                        normalized, job_record.title, job_record.description
+                    )
+
+                    match = compute_match(profile, profile_embedding, normalized, job_embedding)
+
+                    existing_match = session.query(JobMatchRecord).filter(
+                        JobMatchRecord.job_id == job_record.id,
+                        JobMatchRecord.profile_id == profile_id
+                    ).first()
+                    if existing_match:
+                        existing_match.final_score = match.final_score
+                        existing_match.required_score = match.required_score
+                        existing_match.preferred_score = match.preferred_score
+                        existing_match.semantic_score = match.semantic_score
+                        existing_match.experience_score = match.experience_score
+                        existing_match.role_score = match.role_score
+                        existing_match.exact_matches = match.exact_matches
+                        existing_match.related_matches = match.related_matches
+                        existing_match.gaps = match.gaps
+                        existing_match.explanation = match.explanation
+                        existing_match.analyzed_at = datetime.now(timezone.utc)
+                    else:
+                        new_match = JobMatchRecord(
+                            job_id=match.job_id,
+                            profile_id=profile_id,
+                            profile_version=profile.profile_version,
+                            final_score=match.final_score,
+                            required_score=match.required_score,
+                            preferred_score=match.preferred_score,
+                            semantic_score=match.semantic_score,
+                            experience_score=match.experience_score,
+                            role_score=match.role_score,
+                            exact_matches=match.exact_matches,
+                            related_matches=match.related_matches,
+                            gaps=match.gaps,
+                            explanation=match.explanation,
+                        )
+                        session.add(new_match)
+
+                    processed += 1
+                    if processed % 50 == 0:
+                        session.commit()
+                except Exception as e:
+                    logger.error("Error matching job %d: %s", job_record.id, e)
+                    errors += 1
+
+            session.commit()
+            logger.info(
+                "Batch match complete: processed=%d, errors=%d, total=%d",
+                processed, errors, total,
+            )
+
+    except Exception as e:
+        logger.error("Batch match failed: %s", e)

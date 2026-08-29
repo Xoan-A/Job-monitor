@@ -6,26 +6,12 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import BigInteger, and_, cast, func, or_, select, String
 
 from backend.config import load_config
-from backend.database import JobRecord
+from backend.database import JobRecord, JobMatchRecord, CandidateProfileRecord
 
 from .api_models import JobResponse
 
 VALID_STATUSES = ["new", "reviewing", "shortlisted", "applied", "interview", "rejected", "archived"]
-VALID_SORTS = ["newest", "oldest", "company", "relevance", "salary"]
-
-_profile_cache: Optional[Dict[str, Any]] = None
-
-
-def get_profile() -> Dict[str, Any]:
-    """Optional candidate profile (config.yaml `profile.skills`) used for keyword matching."""
-    global _profile_cache
-    if _profile_cache is None:
-        try:
-            config = load_config()
-            _profile_cache = config.get("profile", {}) or {}
-        except Exception:
-            _profile_cache = {}
-    return _profile_cache
+VALID_SORTS = ["newest", "oldest", "company", "relevance", "salary", "match"]
 
 
 def _iso(dt) -> Optional[str]:
@@ -41,33 +27,35 @@ def _compose_location(r: JobRecord) -> Optional[str]:
     return ", ".join(seen) if seen else None
 
 
-def _compute_match(record: JobRecord) -> tuple[Optional[int], List[str], List[str]]:
-    keywords = get_profile().get("skills") or []
-    keywords = [str(k).strip() for k in keywords if str(k).strip()]
-    if not keywords:
-        return None, [], []
-    haystacks = " ".join(
-        [
-            (record.title or "").lower(),
-            " ".join(record.tags or []).lower(),
-            (record.description or "")[:4000].lower(),
-        ]
-    )
-    matched: List[str] = []
-    missing: List[str] = []
-    for kw in keywords:
-        if kw.lower() in haystacks:
-            matched.append(kw)
-        else:
-            missing.append(kw)
-    total = len(matched) + len(missing)
-    score = round(100 * len(matched) / total) if total else None
-    return score, matched, missing
-
-
-def _to_response(r: JobRecord) -> JobResponse:
-    score, strong, gaps = _compute_match(r)
+def _to_response(
+    r: JobRecord,
+    match: Optional[JobMatchRecord] = None,
+) -> JobResponse:
     tags = r.tags if isinstance(r.tags, list) else []
+
+    match_score = None
+    match_strong = []
+    match_gaps = []
+    match_related = []
+    match_explanation = None
+    match_required_score = None
+    match_preferred_score = None
+    match_semantic_score = None
+    match_experience_score = None
+    match_role_score = None
+
+    if match:
+        match_score = round(match.final_score) if match.final_score is not None else None
+        match_strong = match.exact_matches or []
+        match_gaps = match.gaps or []
+        match_related = match.related_matches or []
+        match_explanation = match.explanation
+        match_required_score = round(match.required_score) if match.required_score is not None else None
+        match_preferred_score = round(match.preferred_score) if match.preferred_score is not None else None
+        match_semantic_score = round(match.semantic_score * 100) if match.semantic_score is not None else None
+        match_experience_score = round(match.experience_score) if match.experience_score is not None else None
+        match_role_score = round(match.role_score) if match.role_score is not None else None
+
     return JobResponse(
         id=r.id,
         title=r.title,
@@ -99,9 +87,16 @@ def _to_response(r: JobRecord) -> JobResponse:
         reviewed_at=_iso(r.reviewed_at),
         created_at=_iso(r.created_at),
         updated_at=_iso(r.updated_at),
-        match_score=score,
-        match_strong=strong,
-        match_gaps=gaps,
+        match_score=match_score,
+        match_strong=match_strong,
+        match_gaps=match_gaps,
+        match_related=match_related,
+        match_explanation=match_explanation,
+        match_required_score=match_required_score,
+        match_preferred_score=match_preferred_score,
+        match_semantic_score=match_semantic_score,
+        match_experience_score=match_experience_score,
+        match_role_score=match_role_score,
     )
 
 
@@ -162,7 +157,7 @@ def _build_filters(args: Dict[str, Any]) -> List:
     return filters
 
 
-def _order_clause(sort: str, q: Optional[str]):
+def _order_clause(sort: str, q: Optional[str], has_profile: bool = False):
     newest = func.coalesce(JobRecord.published_at, JobRecord.created_at)
     salary_num = cast(
         func.nullif(func.regexp_replace(func.split_part(JobRecord.salary, "-", 1), "[^0-9]", "", "g"), ""),
@@ -177,4 +172,6 @@ def _order_clause(sort: str, q: Optional[str]):
     if sort == "relevance" and q:
         exact = JobRecord.title.ilike(f"%{q}%").desc()
         return [exact, newest.desc()]
+    if sort == "match" and has_profile:
+        return [func.coalesce(JobMatchRecord.final_score, 0).desc().nulls_last(), newest.desc()]
     return [newest.desc()]
