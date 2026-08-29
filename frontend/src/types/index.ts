@@ -163,3 +163,15 @@ export type NavSection =
   | 'shortlisted'
   | 'applied'
   | 'rejected'
+
+export interface ResumeInfo {
+  id: number
+  version: number
+  skills: string[]
+  roles: string[]
+  experience_level: string | null
+  years_experience: number | null
+  education: { degree: string; field: string; raw: string }[]
+  languages: { language: string; level: string | null }[]
+  updated_at: string | null
+}

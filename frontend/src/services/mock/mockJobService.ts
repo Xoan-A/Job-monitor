@@ -1,4 +1,4 @@
-import type { Facets, Job, JobsPage, SummaryStats } from '../../types'
+import type { Facets, Job, JobsPage, ResumeInfo, SummaryStats } from '../../types'
 import { ServiceError, buildApiParams, type JobPatchInput, type JobQuery, type JobService } from '../jobService'
 import { buildMockJobs, persistMockState } from './mockData'
 
@@ -170,5 +170,33 @@ export class MockJobService implements JobService {
   async getPurgeableCount(_days: number, _source?: string): Promise<{ count: number }> {
     await delay(50)
     return { count: 0 }
+  }
+
+  async getProfile(): Promise<ResumeInfo | null> {
+    await delay(80)
+    return null
+  }
+
+  async uploadProfile(_file: File): Promise<ResumeInfo> {
+    await delay(300)
+    return {
+      id: 1,
+      version: 1,
+      skills: ['JavaScript', 'React', 'Node.js'],
+      roles: ['developer'],
+      experience_level: 'mid',
+      years_experience: 4,
+      education: [],
+      languages: [{ language: 'Spanish', level: 'Native' }],
+      updated_at: new Date().toISOString(),
+    }
+  }
+
+  async deleteProfile(): Promise<void> {
+    await delay(100)
+  }
+
+  async startBatchMatch(): Promise<void> {
+    await delay(100)
   }
 }

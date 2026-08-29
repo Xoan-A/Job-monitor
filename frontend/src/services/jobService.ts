@@ -1,4 +1,4 @@
-import type { Facets, Job, JobsPage, JobFilters, JobStatus, SortOption, SummaryStats } from '../types'
+import type { Facets, Job, JobsPage, JobFilters, JobStatus, ResumeInfo, SortOption, SummaryStats } from '../types'
 
 export interface JobQuery extends JobFilters {
   page: number
@@ -23,6 +23,10 @@ export interface JobService {
   getSummary(): Promise<SummaryStats>
   cleanupOldJobs(days: number, source?: string): Promise<{ deleted: number }>
   getPurgeableCount(days: number, source?: string): Promise<{ count: number }>
+  getProfile(): Promise<ResumeInfo | null>
+  uploadProfile(file: File): Promise<ResumeInfo>
+  deleteProfile(): Promise<void>
+  startBatchMatch(): Promise<void>
 }
 
 export class ServiceError extends Error {
@@ -256,5 +260,46 @@ export class ApiJobService implements JobService {
     if (source) params.set('source', source)
     const res = await request<{ count: number }>(`/jobs/purgeable?${params}`)
     return { count: res.count ?? 0 }
+  }
+
+  async getProfile(): Promise<ResumeInfo | null> {
+    try {
+      return await request<ResumeInfo>('/profile')
+    } catch (err) {
+      if (err instanceof ServiceError && err.message.includes('404')) return null
+      throw err
+    }
+  }
+
+  async uploadProfile(file: File): Promise<ResumeInfo> {
+    const formData = new FormData()
+    formData.append('file', file)
+    const base = import.meta.env.VITE_API_BASE || '/api'
+    const res = await fetch(`${base}/profile/upload`, { method: 'POST', body: formData })
+    if (!res.ok) {
+      let detail = ''
+      try { const body = await res.json(); detail = body?.detail || '' } catch {}
+      throw new ServiceError(`Upload failed (${res.status})${detail ? `: ${detail}` : ''}`)
+    }
+    const data = await res.json()
+    return {
+      id: data.profile_id ?? data.id ?? 0,
+      version: data.version ?? 1,
+      skills: data.skills ?? [],
+      roles: data.roles ?? [],
+      experience_level: data.experience_level ?? null,
+      years_experience: data.years_experience ?? null,
+      education: data.education ?? [],
+      languages: data.languages ?? [],
+      updated_at: data.updated_at ?? null,
+    }
+  }
+
+  async deleteProfile(): Promise<void> {
+    await request<{ status: string }>('/profile/delete', { method: 'POST' })
+  }
+
+  async startBatchMatch(): Promise<void> {
+    await request<{ status: string }>('/match/batch', { method: 'POST' })
   }
 }

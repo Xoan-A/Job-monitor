@@ -175,3 +175,105 @@
 .toast--error {
   border-left: 3px solid var(--danger);
 }
+
+/* Resume uploader */
+.uploader-loading {
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+  padding: 12px 0;
+}
+
+.uploader-dropzone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.uploader-dropzone:hover,
+.uploader-dropzone--active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.uploader-dropzone__icon {
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+.uploader-dropzone--active .uploader-dropzone__icon {
+  color: var(--accent);
+}
+.uploader-dropzone__text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.uploader-dropzone__hint {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+}
+
+.uploader-profile {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.uploader-profile__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-alt);
+}
+.uploader-profile__icon {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.uploader-profile__info {
+  flex: 1;
+  min-width: 0;
+}
+.uploader-profile__title {
+  font-size: 13px;
+  font-weight: 600;
+}
+.uploader-profile__meta {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+}
+.uploader-profile__details {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.uploader-profile__field {
+  font-size: 12px;
+  line-height: 1.4;
+}
+.uploader-profile__field strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-right: 4px;
+}
+.uploader-profile__field span {
+  color: var(--text-secondary);
+}
+.uploader-profile__actions {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

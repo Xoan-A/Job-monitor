@@ -1,5 +1,6 @@
 import { useApp } from '../context/selectors'
 import type { DataSourceMode } from '../services'
+import { ResumeUploader } from './ResumeUploader'
 
 export function SettingsDialog() {
   const { setOpenDialog, dataSourceMode, setDataSourceMode, sourceKind, refreshJobs } = useApp()
@@ -18,6 +19,14 @@ export function SettingsDialog() {
         </div>
         <div className="modal__body">
           <fieldset className="settings-group">
+            <legend>Resume / Profile</legend>
+            <p className="settings-hint">
+              Upload your resume to enable intelligent job matching. The system will parse your skills, experience, and education to compute match scores.
+            </p>
+            <ResumeUploader />
+          </fieldset>
+
+          <fieldset className="settings-group" style={{ marginTop: 16 }}>
             <legend>Data source</legend>
             <p className="settings-hint">
               Connect to the backend API or browse with demo data.

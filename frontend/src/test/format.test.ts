@@ -58,15 +58,15 @@ describe('matchLabel', () => {
     expect(matchLabel(null)).toBeNull()
   })
 
-  it('returns Strong match for high score', () => {
-    expect(matchLabel(85)).toBe('Strong match')
+  it('returns Excellent match for high score', () => {
+    expect(matchLabel(85)).toBe('Excellent match')
   })
 
-  it('returns Good match for medium score', () => {
-    expect(matchLabel(60)).toBe('Good match')
+  it('returns Moderate match for medium score', () => {
+    expect(matchLabel(60)).toBe('Moderate match')
   })
 
-  it('returns Low match for low score', () => {
-    expect(matchLabel(30)).toBe('Low match')
+  it('returns Weak match for low score', () => {
+    expect(matchLabel(30)).toBe('Weak match')
   })
 })
