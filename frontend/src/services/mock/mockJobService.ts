@@ -199,4 +199,20 @@ export class MockJobService implements JobService {
   async startBatchMatch(): Promise<void> {
     await delay(100)
   }
+
+  async matchSingleJob(jobId: number): Promise<Job> {
+    await delay(200)
+    const job = ensureJobs().find((j) => j.id === jobId)
+    if (!job) throw new ServiceError(`Job ${jobId} not found`)
+    return job
+  }
+
+  async addSkillTerm(_term: string): Promise<{ added: boolean }> {
+    await delay(100)
+    return { added: true }
+  }
+
+  async rerunAllMatches(): Promise<void> {
+    await delay(200)
+  }
 }

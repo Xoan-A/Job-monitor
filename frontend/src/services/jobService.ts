@@ -27,6 +27,9 @@ export interface JobService {
   uploadProfile(file: File): Promise<ResumeInfo>
   deleteProfile(): Promise<void>
   startBatchMatch(): Promise<void>
+  matchSingleJob(jobId: number): Promise<Job>
+  addSkillTerm(term: string): Promise<{ added: boolean }>
+  rerunAllMatches(): Promise<void>
 }
 
 export class ServiceError extends Error {
@@ -300,6 +303,21 @@ export class ApiJobService implements JobService {
   }
 
   async startBatchMatch(): Promise<void> {
+    await request<{ status: string }>('/match/batch', { method: 'POST' })
+  }
+
+  async matchSingleJob(jobId: number): Promise<Job> {
+    return mapApiJob(await request<ApiJob>(`/match/${jobId}`, { method: 'POST' }))
+  }
+
+  async addSkillTerm(term: string): Promise<{ added: boolean }> {
+    return request<{ added: boolean }>('/skills', {
+      method: 'POST',
+      body: JSON.stringify({ term }),
+    })
+  }
+
+  async rerunAllMatches(): Promise<void> {
     await request<{ status: string }>('/match/batch', { method: 'POST' })
   }
 }

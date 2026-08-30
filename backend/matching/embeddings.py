@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import struct
 from typing import Optional
 
 import numpy as np
@@ -11,19 +10,22 @@ logger = logging.getLogger(__name__)
 _model = None
 
 
+def preload_model():
+    global _model
+    if _model is not None:
+        return
+    try:
+        from fastembed import TextEmbedding
+        _model = TextEmbedding("sentence-transformers/all-MiniLM-L6-v2")
+        logger.info("Preloaded embedding model: all-MiniLM-L6-v2")
+    except Exception as e:
+        logger.warning("Failed to preload embedding model: %s", e)
+
+
 def _get_model():
     global _model
     if _model is None:
-        try:
-            from fastembed import TextEmbedding
-            _model = TextEmbedding("sentence-transformers/all-MiniLM-L6-v2")
-            logger.info("Loaded embedding model: all-MiniLM-L6-v2")
-        except ImportError:
-            logger.warning("fastembed not installed, semantic matching disabled")
-            return None
-        except Exception as e:
-            logger.warning("Failed to load embedding model: %s", e)
-            return None
+        preload_model()
     return _model
 
 

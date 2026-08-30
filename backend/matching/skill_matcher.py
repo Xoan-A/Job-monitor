@@ -24,7 +24,7 @@ class SkillMatcher:
         if not candidate_skills and not job_skills:
             return 0.0, [], [], []
         if not job_skills:
-            return 0.0, [], [], list(candidate_skills)
+            return 0.0, [], [], []
 
         cand_set = set(candidate_skills)
         job_set = set(job_skills)

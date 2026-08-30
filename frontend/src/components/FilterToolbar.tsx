@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../context/selectors'
 import { useDebounce } from '../lib/useDebounce'
 import { Dropdown, FilterSelect } from './primitives'
-import { IconSliders, IconX, IconCheck } from './icons'
+import { IconSliders, IconX, IconCheck, IconRefresh } from './icons'
 import { JOB_STATUSES, STATUS_LABELS, type PostedWithinOption, type RemoteType, type SortOption } from '../types'
 
 const SORT_LABELS: Record<SortOption, string> = {
@@ -34,13 +34,29 @@ export function FilterToolbar() {
     totalJobs,
     jobsLoading,
     activeFilterCount,
+    service,
+    pushToast,
   } = useApp()
   const [moreOpen, setMoreOpen] = useState(false)
+  const [rerunningAll, setRerunningAll] = useState(false)
 
   const debouncedCompany = useDebounce((v: string) => patchFilter('company', v), 300)
   const debouncedSkill = useDebounce((v: string) => patchFilter('skill', v), 300)
 
   const moreCount = [filters.company, filters.skill, filters.experience].filter(Boolean).length
+
+  const handleRerunAll = async () => {
+    if (!service || rerunningAll) return
+    setRerunningAll(true)
+    try {
+      await service.rerunAllMatches()
+      pushToast('All matches recalculated', 'success')
+    } catch {
+      pushToast('Failed to recalculate matches')
+    } finally {
+      setRerunningAll(false)
+    }
+  }
 
   return (
     <div className="toolbar">
@@ -94,6 +110,16 @@ export function FilterToolbar() {
         </button>
 
         <div className="toolbar__spacer" />
+
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          onClick={handleRerunAll}
+          disabled={rerunningAll}
+          title="Recalculate all job matches"
+        >
+          <IconRefresh size={13} /> {rerunningAll ? 'Matching...' : 'Match all'}
+        </button>
 
         <Dropdown
           align="right"

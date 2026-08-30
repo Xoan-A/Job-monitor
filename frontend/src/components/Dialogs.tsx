@@ -1,6 +1,8 @@
 import { useApp } from '../context/selectors'
 import { SettingsDialog } from './SettingsDialog'
 import { AboutDialog } from './AboutDialog'
+import { ProfileDialog } from './ProfileDialog'
+import { AddTermModal } from './AddTermModal'
 
 export interface ConfirmOptions {
   title: string
@@ -49,7 +51,10 @@ export function ConfirmDialog() {
 export function Dialogs() {
   const { openDialog } = useApp()
   if (!openDialog) return null
-  return openDialog === 'settings' ? <SettingsDialog /> : <AboutDialog />
+  if (openDialog === 'settings') return <SettingsDialog />
+  if (openDialog === 'profile') return <ProfileDialog />
+  if (openDialog === 'addTerm') return <AddTermModal />
+  return <AboutDialog />
 }
 
 export function Toasts() {

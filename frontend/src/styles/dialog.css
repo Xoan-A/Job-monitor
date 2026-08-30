@@ -99,6 +99,20 @@
   color: var(--text-secondary);
 }
 
+.add-term-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.add-term-field label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+}
+
 .settings-options {
   display: flex;
   flex-direction: column;
@@ -211,6 +225,13 @@
 .uploader-dropzone__hint {
   font-size: 11.5px;
   color: var(--text-tertiary);
+}
+
+.uploader-note {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  font-style: italic;
 }
 
 .uploader-profile {

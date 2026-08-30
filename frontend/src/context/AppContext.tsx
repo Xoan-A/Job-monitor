@@ -88,8 +88,8 @@ export interface AppState {
   sidebarCollapsed: boolean
   toggleSidebar: () => void
 
-  openDialog: 'settings' | 'about' | null
-  setOpenDialog: (d: 'settings' | 'about' | null) => void
+  openDialog: 'settings' | 'about' | 'profile' | 'addTerm' | null
+  setOpenDialog: (d: 'settings' | 'about' | 'profile' | 'addTerm' | null) => void
 
   confirmState: ConfirmOptions | null
   openConfirm: (options: ConfirmOptions) => void
@@ -161,7 +161,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const toggleSidebar = useCallback(() => setSidebarCollapsed((v) => !v), [])
-  const [openDialog, setOpenDialog] = useState<'settings' | 'about' | null>(null)
+  const [openDialog, setOpenDialog] = useState<'settings' | 'about' | 'profile' | 'addTerm' | null>(null)
   const [confirmState, setConfirmState] = useState<ConfirmOptions | null>(null)
 
   const openConfirm = useCallback((options: ConfirmOptions) => {

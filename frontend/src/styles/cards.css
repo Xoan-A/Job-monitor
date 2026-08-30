@@ -474,24 +474,33 @@
 
 /* Match analysis */
 .match-analysis {
-  display: grid;
-  grid-template-columns: auto 1fr 1fr;
-  gap: 18px;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 14px 16px;
 }
 
-.match-score {
+.match-analysis__actions {
   display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--border);
+  margin-bottom: 4px;
+}
+
+.match-score {
+  display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-width: 84px;
   padding: 10px 12px;
   border-radius: var(--radius-md);
+  align-self: flex-start;
 }
 
 .match-score--strong { background: #e8f5ec; }
@@ -536,11 +545,70 @@
 }
 
 .match-list__item--strong svg { color: var(--success); }
+.match-list__item--related svg { color: var(--accent); }
+.match-list__item--related { color: var(--text-secondary); }
 .match-list__item--gap svg { color: var(--danger); opacity: 0.7; }
 .match-list__item--gap { color: var(--text-secondary); }
 
+.match-analysis__explanation {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.match-analysis__components {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.match-component {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.match-component__header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.match-component__label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.match-component__score {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.match-component__bar {
+  height: 4px;
+  background: var(--muted-bg);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.match-component__fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.match-component__fill--good { background: var(--success); }
+.match-component__fill--mid { background: var(--accent); }
+.match-component__fill--low { background: var(--text-tertiary); }
+
+.match-component__weight {
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+}
+
 .match-analysis__note {
-  grid-column: 1 / -1;
   margin: 0;
   padding-top: 10px;
   border-top: 1px dashed var(--border);

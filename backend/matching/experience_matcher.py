@@ -44,7 +44,10 @@ def match_experience(
     if c_level is None and j_level is None:
         return None
 
-    if c_level is None or j_level is None:
+    if c_level is None:
+        c_level = 1
+
+    if j_level is None:
         return 70.0
 
     diff = abs(c_level - j_level)

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../context/selectors'
 import { Dropdown } from './primitives'
-import { IconBell, IconSearch, IconSettings, IconInfo, IconX, IconUser } from './icons'
+import { IconBell, IconSearch, IconSettings, IconInfo, IconX, IconUser, IconFileText } from './icons'
 import { sourceLabel } from '../lib/format'
 
 function SearchBar() {
@@ -150,6 +150,16 @@ export function Header() {
                 }}
               >
                 <IconSettings size={14} /> Settings
+              </button>
+              <button
+                type="button"
+                className="dropdown__item"
+                onClick={() => {
+                  setOpenDialog('profile')
+                  close()
+                }}
+              >
+                <IconFileText size={14} /> Upload Resume
               </button>
               <button
                 type="button"

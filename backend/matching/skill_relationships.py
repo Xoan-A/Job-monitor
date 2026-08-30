@@ -121,9 +121,21 @@ class SkillRelationships:
         self._relationships = dict(_DEFAULT_RELATIONSHIPS)
         if extra:
             self._relationships.update(extra)
+        # Build reverse index: if A relates to B, then B also relates to A
+        self._reverse: Dict[str, List[Tuple[str, float]]] = {}
+        for skill, related_list in self._relationships.items():
+            for related_skill, confidence in related_list:
+                self._reverse.setdefault(related_skill, []).append((skill, confidence))
 
     def get_related(self, skill: str) -> List[Tuple[str, float]]:
-        return self._relationships.get(skill, [])
+        direct = self._relationships.get(skill, [])
+        reverse = self._reverse.get(skill, [])
+        seen = {s for s, _ in direct}
+        combined = list(direct)
+        for s, c in reverse:
+            if s not in seen:
+                combined.append((s, c))
+        return combined
 
     def get_all_related(self, skills: List[str]) -> Dict[str, List[Tuple[str, float]]]:
         result = {}

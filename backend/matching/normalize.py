@@ -29,6 +29,9 @@ def normalize_job(job_id: int, title: str, tags: Optional[list], description: Op
 
     if not required:
         required = sorted(all_skills)
+    else:
+        unmatched = all_skills - set(required) - set(preferred)
+        required = sorted(set(required) | unmatched)
     if not preferred:
         preferred = []
 

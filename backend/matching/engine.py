@@ -58,6 +58,7 @@ def compute_match(
     ))
     from ..models import MatchRelated
     related_objs = [MatchRelated(source=s, target=t, confidence=c) for s, t, c in all_related]
+    related_dicts = [{"source": s, "target": t, "confidence": c} for s, t, c in all_related]
     all_gaps = list(set(req_gaps))
 
     explanation = generate_explanation(

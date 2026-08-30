@@ -10,6 +10,7 @@ from .scraper.base_scraper import ScraperRegistry
 from .scraper.buscojobs_scraper import BuscojobsScraper
 from .config import get_database_config, get_scraper_configs, load_config
 from .database import Database
+from .scraper.getonbrd_scraper import GetonbrdScraper
 from .scraper.jooble_scraper import JoobleScraper
 from .models import ScrapeResult
 
